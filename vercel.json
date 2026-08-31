@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/outreach?cron=true",
+      "schedule": "0 12 * * 1-5"
+    }
+  ]
+}

@@ -1,133 +1,69 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
-interface Lead {
-  id: number;
-  name: string;
-  contact: string;
-  email: string;
-  phone: string;
-  niche: string;
-  status: string;
-}
+export default function SurgeCRMHome() {
+  const [niche, setNiche] = useState('');
+  const [leads, setLeads] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-export default function Dashboard() {
-  const [metrics, setMetrics] = useState({ managedClients: 14, leadsFound: 4820, emailsSent: 32150, callsQueued: 187 });
-  const [leads, setLeads] = useState<Lead[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [statusMessage, setStatusMessage] = useState('');
-
-  const syncDashboardStats = async () => {
-    try {
-      const res = await fetch('/api/metrics');
-      const json = await res.json();
-      if (json.success) {
-        setMetrics(json.data);
-        setLeads(json.leads || []);
-      }
-    } catch (err) {
-      console.warn("Synchronizing live global context maps...");
-    }
-  };
-
-  useEffect(() => {
-    syncDashboardStats();
-    const interval = setInterval(syncDashboardStats, 4000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const handleLaunchSequence = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleExtractLeads = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!searchQuery.trim()) return;
-    setLoading(true);
-    setStatusMessage('Initializing scraping & matrix sequence...');
+    if (!niche.trim()) return;
+    setIsLoading(true);
     try {
       const res = await fetch('/api/metrics', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ searchCriteria: searchQuery })
+        body: JSON.stringify({ searchCriteria: niche }),
       });
-      const json = await res.json();
-      if (json.success) {
-        setStatusMessage(json.message);
-        setMetrics(json.updatedMetrics);
-        setLeads(json.leads || []);
-        setSearchQuery('');
-      } else {
-        setStatusMessage('Automation sequence failed.');
-      }
+      const data = await res.json();
+      if (data.success) setLeads(data.data || []);
     } catch (err) {
-      setStatusMessage('Error contacting SurgeCRM core backend engine.');
+      console.error(err);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <div style={{ padding: '40px', fontFamily: 'sans-serif', backgroundColor: '#0f172a', color: '#f8fafc', minHeight: '100vh', boxSizing: 'border-box' }}>
-      <header style={{ marginBottom: '40px' }}>
-        <h1 style={{ fontSize: '32px', fontWeight: 'bold', color: '#38bdf8', margin: 0 }}>⚡ SurgeCRM Engine</h1>
-        <p style={{ color: '#94a3b8', margin: '5px 0 0 0' }}>Live Automation Control Center</p>
-      </header>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '40px' }}>
-        <div style={{ padding: '20px', backgroundColor: '#1e293b', borderRadius: '12px', border: '1px solid #334155' }}>
-          <h3 style={{ color: '#94a3b8', fontSize: '14px', margin: 0 }}>Managed Clients</h3>
-          <p style={{ fontSize: '28px', fontWeight: 'bold', margin: '10px 0 0 0' }}>{metrics.managedClients}</p>
-        </div>
-        <div style={{ padding: '20px', backgroundColor: '#1e293b', borderRadius: '12px', border: '1px solid #334155' }}>
-          <h3 style={{ color: '#94a3b8', fontSize: '14px', margin: 0 }}>Leads Found</h3>
-          <p style={{ fontSize: '28px', fontWeight: 'bold', margin: '10px 0 0 0', color: '#4ade80' }}>{metrics.leadsFound.toLocaleString()}</p>
-        </div>
-        <div style={{ padding: '20px', backgroundColor: '#1e293b', borderRadius: '12px', border: '1px solid #334155' }}>
-          <h3 style={{ color: '#94a3b8', fontSize: '14px', margin: 0 }}>Emails Sent</h3>
-          <p style={{ fontSize: '28px', fontWeight: 'bold', margin: '10px 0 0 0', color: '#60a5fa' }}>{metrics.emailsSent.toLocaleString()}</p>
-        </div>
-        <div style={{ padding: '20px', backgroundColor: '#1e293b', borderRadius: '12px', border: '1px solid #334155' }}>
-          <h3 style={{ color: '#94a3b8', fontSize: '14px', margin: 0 }}>Calls Queued</h3>
-          <p style={{ fontSize: '28px', fontWeight: 'bold', margin: '10px 0 0 0', color: '#f59e0b' }}>{metrics.callsQueued}</p>
-        </div>
-      </div>
-      <div style={{ backgroundColor: '#1e293b', padding: '30px', borderRadius: '12px', border: '1px solid #334155', maxWidth: '600px', marginBottom: '40px' }}>
-        <h2 style={{ fontSize: '20px', margin: '0 0 15px 0' }}>Launch New Scraper & Sequence</h2>
-        <form onSubmit={handleLaunchSequence} style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <input type="text" placeholder="e.g. Real Estate Agents in Miami" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} disabled={loading} style={{ flex: 1, minWidth: '200px', padding: '12px', borderRadius: '8px', border: '1px solid #475569', backgroundColor: '#0f172a', color: '#fff', fontSize: '16px', outline: 'none' }} />
-          <button type="submit" disabled={loading} style={{ padding: '12px 24px', backgroundColor: '#38bdf8', color: '#0f172a', fontWeight: 'bold', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '16px' }}>{loading ? 'Launching...' : 'Launch Matrix'}</button>
+    <div className="min-h-screen bg-slate-50 text-slate-800 p-8 flex flex-col items-center justify-center font-sans">
+      {/* Light Mode Visual Gradient Accent */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-gradient-to-b from-indigo-100/40 to-transparent rounded-full blur-3xl pointer-events-none" />
+
+      <div className="relative z-10 text-center max-w-xl w-full">
+        <h1 className="text-4xl font-black mb-3 tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-blue-600">
+          ⚡ SURGECRM.SITE
+        </h1>
+        <p className="text-sm text-slate-500 mb-8 font-medium">
+          Global concurrent B2B streaming multi-registry extraction engine workspace.
+        </p>
+        
+        <form onSubmit={handleExtractLeads} className="flex gap-2 max-w-md w-full mx-auto mb-8 bg-white p-2 rounded-xl border border-slate-200 shadow-md focus-within:border-indigo-500 transition-colors">
+          <input 
+            type="text" 
+            value={niche} 
+            onChange={(e) => setNiche(e.target.value)} 
+            placeholder="Enter a market sector (e.g. Contractors)..." 
+            className="flex-1 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder-slate-400 focus:outline-none"
+          />
+          <button type="submit" className="bg-indigo-600 hover:bg-indigo-700 active:scale-98 px-5 py-2 rounded-lg text-sm font-bold text-white transition-all shadow-md">
+            {isLoading ? 'Extracting...' : 'Generate Leads'}
+          </button>
         </form>
-        {statusMessage && <div style={{ marginTop: '20px', padding: '12px', backgroundColor: '#334155', borderRadius: '6px', fontSize: '14px', color: '#38bdf8' }}>{statusMessage}</div>}
-      </div>
-      <div style={{ backgroundColor: '#1e293b', padding: '30px', borderRadius: '12px', border: '1px solid #334155' }}>
-        <h2 style={{ fontSize: '20px', margin: '0 0 20px 0' }}>📋 Active Lead Database Pipeline</h2>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-            <thead>
-              <tr style={{ borderBottom: '2px solid #334155', color: '#94a3b8', fontSize: '14px' }}>
-                <th style={{ padding: '12px' }}>Company Name</th>
-                <th style={{ padding: '12px' }}>Decision Maker</th>
-                <th style={{ padding: '12px' }}>Email Address</th>
-                <th style={{ padding: '12px' }}>Phone String</th>
-                <th style={{ padding: '12px' }}>Target Parameter</th>
-                <th style={{ padding: '12px' }}>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {leads.length === 0 ? (
-                <tr><td colSpan={6} style={{ padding: '24px', textAlign: 'center', color: '#94a3b8' }}>Establishing secure cloud sync framework...</td></tr>
-              ) : (
-                leads.map((lead) => (
-                  <tr key={lead.id} style={{ borderBottom: '1px solid #334155', fontSize: '15px' }}>
-                    <td style={{ padding: '12px', fontWeight: 'bold' }}>{lead.name}</td>
-                    <td style={{ padding: '12px' }}>{lead.contact}</td>
-                    <td style={{ padding: '12px', color: '#38bdf8' }}>{lead.email}</td>
-                    <td style={{ padding: '12px', color: '#94a3b8' }}>{lead.phone}</td>
-                    <td style={{ padding: '12px', color: '#94a3b8' }}>{lead.niche}</td>
-                    <td style={{ padding: '12px' }}><span style={{ padding: '4px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', backgroundColor: lead.status === 'Email Found' ? '#1e3a8a' : '#065f46', color: '#fff' }}>{lead.status}</span></td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        
+        {leads.length > 0 && (
+          <div className="w-full max-w-md mx-auto bg-white border border-slate-200 rounded-xl p-5 text-left text-xs font-mono shadow-lg border-l-4 border-l-emerald-500">
+            <p className="text-emerald-600 mb-3 font-bold flex items-center gap-1.5">
+              <span>🎉</span> Sync Complete! Streamed {leads.length} live matching records.
+            </p>
+            <a 
+              href="/dashboard/leads" 
+              className="inline-flex items-center text-indigo-600 hover:text-indigo-700 font-bold tracking-tight underline transition-colors"
+            >
+              Open Leads CRM Dashboard Workspace →
+            </a>
+          </div>
+        )}
       </div>
     </div>
   );

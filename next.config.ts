@@ -1,8 +1,1 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  /* Ensure Turbopack evaluates tailwind layers across internal source boundaries */
-  transpilePackages: ["@tailwindcss/postcss"],
-};
-
-export default nextConfig;
+import type { NextConfig } from 'next'; const nextConfig: NextConfig = { turbopack: { root: '.' } }; export default nextConfig;
