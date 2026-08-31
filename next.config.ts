@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  /* Ensure Turbopack evaluates tailwind layers across internal source boundaries */
+  transpilePackages: ["@tailwindcss/postcss"],
 };
 
 export default nextConfig;

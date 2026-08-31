@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1,
+    "companyName": "Buckeye Roofing Group",
+    "industry": "Roofing Services",
+    "email": "contact@buckeyeroofingcolumbus.com",
+    "crmStatus": "Local Lock-On Active"
+  },
+  {
+    "id": 2,
+    "companyName": "Apex Marketing Experts",
+    "industry": "Marketing Services",
+    "email": "contact@apexmarketingcleveland.com",
+    "crmStatus": "Local Lock-On Active"
+  },
+  {
+    "id": 3,
+    "companyName": "Midwest Logistics Hub",
+    "industry": "Logistics 3PL Services",
+    "email": "info@midwestlogisticsdayton.com",
+    "crmStatus": "Local Lock-On Active"
+  }
+]
