@@ -1,23 +1,54 @@
 [
   {
-    "id": 1,
-    "companyName": "Buckeye Roofing Group",
-    "industry": "Roofing Services",
-    "email": "contact@buckeyeroofingcolumbus.com",
-    "crmStatus": "Local Lock-On Active"
+    "id": "lead_1",
+    "targetCompany": "Buckeye Roofing Group",
+    "city": "Columbus",
+    "niche": "Roofing Services",
+    "status": "New",
+    "dealValue": 15000,
+    "hiringClientId": "client_1",
+    "hiringClientName": "Rainmaker Sales LLC",
+    "agencyCommissionPct": 15,
+    "confidenceScore": 80,
+    "outcome": "Open"
   },
   {
-    "id": 2,
-    "companyName": "Apex Marketing Experts",
-    "industry": "Marketing Services",
-    "email": "contact@apexmarketingcleveland.com",
-    "crmStatus": "Local Lock-On Active"
+    "id": "lead_2",
+    "targetCompany": "Apex Marketing Experts",
+    "city": "Cleveland",
+    "niche": "Marketing Services",
+    "status": "Working",
+    "dealValue": 8500,
+    "hiringClientId": "client_1",
+    "hiringClientName": "Rainmaker Sales LLC",
+    "agencyCommissionPct": 20,
+    "confidenceScore": 50,
+    "outcome": "Open"
   },
   {
-    "id": 3,
-    "companyName": "Midwest Logistics Hub",
-    "industry": "Logistics 3PL Services",
-    "email": "info@midwestlogisticsdayton.com",
-    "crmStatus": "Local Lock-On Active"
+    "id": "lead_3",
+    "targetCompany": "Midwest Logistics Hub",
+    "city": "Dayton",
+    "niche": "Logistics 3PL Services",
+    "status": "Closed",
+    "dealValue": 32000,
+    "hiringClientId": "client_2",
+    "hiringClientName": "Apex Commercial Roofing",
+    "agencyCommissionPct": 10,
+    "confidenceScore": 100,
+    "outcome": "Won"
+  },
+  {
+    "id": "lead_4",
+    "targetCompany": "Canton Manufacturing Corp",
+    "city": "Canton",
+    "niche": "Industrial Milling",
+    "status": "Closed",
+    "dealValue": 45000,
+    "hiringClientId": "client_3",
+    "hiringClientName": "Tri-County Logistics",
+    "agencyCommissionPct": 12,
+    "confidenceScore": 0,
+    "outcome": "Lost"
   }
 ]

@@ -1,9 +1,9 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-/* Reset default body conditions to clear out hidden dark mode locks */
 body {
-  background-color: #f8fafc !important; /* Forces slate-50 light mode baseline */
-  color: #334155 !important;            /* Forces clean dark slate slate text contrast */
+  background-color: var(--color-slate-900);
+  color: var(--color-slate-100);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
