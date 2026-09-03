@@ -1,10 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* Next.js 16 Standard Top-Level Configuration Blueprint */
-  turbopack: {
-    resolveAlias: {}
-  }
+  experimental: {
+    turbopack: {
+      root: "./",
+    },
+  },
 };
 
 export default nextConfig;
