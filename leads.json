@@ -1,54 +1,46 @@
 [
   {
-    "id": "lead_1",
-    "targetCompany": "Buckeye Roofing Group",
-    "city": "Columbus",
-    "niche": "Roofing Services",
-    "status": "New",
-    "dealValue": 15000,
-    "hiringClientId": "client_1",
-    "hiringClientName": "Rainmaker Sales LLC",
-    "agencyCommissionPct": 15,
-    "confidenceScore": 80,
-    "outcome": "Open"
+    "id": "opp_1788471177796",
+    "company": "abc",
+    "value": 0,
+    "status": "qualifying",
+    "clientKey": "televoi",
+    "qty1": 1,
+    "qty2": 4,
+    "city": "canton",
+    "contact": "mary "
   },
   {
-    "id": "lead_2",
-    "targetCompany": "Apex Marketing Experts",
+    "id": "lead_1788458081930",
+    "company": "Cleveland Logistics Logistics",
     "city": "Cleveland",
-    "niche": "Marketing Services",
-    "status": "Working",
-    "dealValue": 8500,
-    "hiringClientId": "client_1",
-    "hiringClientName": "Rainmaker Sales LLC",
-    "agencyCommissionPct": 20,
-    "confidenceScore": 50,
-    "outcome": "Open"
-  },
-  {
-    "id": "lead_3",
-    "targetCompany": "Midwest Logistics Hub",
-    "city": "Dayton",
     "niche": "Logistics 3PL Services",
-    "status": "Closed",
-    "dealValue": 32000,
-    "hiringClientId": "client_2",
-    "hiringClientName": "Apex Commercial Roofing",
-    "agencyCommissionPct": 10,
-    "confidenceScore": 100,
-    "outcome": "Won"
+    "email": "ops@clevelandspeedy3pl.com",
+    "value": 6.99,
+    "assignedClientId": "client_1",
+    "customProposalJson": "[{\"id\":\"item_1788472220272\",\"name\":\"phone line\",\"price\":6.99,\"category\":\"HARDWARE\"}]"
   },
   {
-    "id": "lead_4",
-    "targetCompany": "Canton Manufacturing Corp",
-    "city": "Canton",
-    "niche": "Industrial Milling",
-    "status": "Closed",
-    "dealValue": 45000,
-    "hiringClientId": "client_3",
-    "hiringClientName": "Tri-County Logistics",
-    "agencyCommissionPct": 12,
-    "confidenceScore": 0,
-    "outcome": "Lost"
+    "id": "lead_1788458081959",
+    "company": "Columbus Solar Solutions",
+    "city": "Columbus",
+    "niche": "Renewable Energy",
+    "email": "partnerships@columbussolarohio.com",
+    "status": "New",
+    "value": 18500,
+    "assignedClientId": "client_1"
+  },
+  {
+    "id": "opp_1788467428302",
+    "company": "abc",
+    "value": 2560,
+    "status": "qualifying",
+    "qty1": 40
+  },
+  {
+    "id": "opp_1788467450907",
+    "company": "abc",
+    "value": 1,
+    "status": "qualifying"
   }
 ]

@@ -1,9 +1,23 @@
 @import "tailwindcss";
 
+@theme {
+  --color-crm-blue: #0070d2;
+  --color-crm-dark: #0b192c;
+  --color-crm-border: #dddbda;
+  --color-crm-surface: #f3f2f1;
+}
+
 body {
-  background-color: var(--color-slate-900);
-  color: var(--color-slate-100);
-  min-height: 100vh;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-crm-surface);
+  color: var(--color-crm-dark);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* MySchoolWorx High-Contrast Micro-Metrics */
+.metric-card-pop {
+  transition: all 0.2s ease-in-out;
+}
+.metric-card-pop:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
 }
