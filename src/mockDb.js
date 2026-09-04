@@ -1,22 +1,21 @@
-import fs from 'fs';
-import path from 'path';
-
-const fp = path.join(process.cwd(), 'leads.json');
-
-export const getLeads = () => { 
-  try { 
-    if (!fs.existsSync(fp)) return [];
-    const raw = fs.readFileSync(fp, 'utf8');
-    return JSON.parse(raw || '[]'); 
-  } catch { 
-    return []; 
-  } 
-};
-
-export const saveLead = (nl) => { 
-  try { 
-    const ls = getLeads(); 
-    ls.push(nl); 
-    fs.writeFileSync(fp, JSON.stringify(ls, null, 2)); 
-  } catch {} 
+// Persistent local data layer caching your tenant accounts
+if (!global.mockDbLeads) {
+  global.mockDbLeads = [];
+}
+export const database = {
+  getLeads: () => global.mockDbLeads,
+  saveLead: (lead) => { global.mockDbLeads.push(lead); return lead; },
+  updateLead: (id, field, value) => {
+    const match = global.mockDbLeads.find(l => l.id === id);
+    if (match) {
+      match[field] = value;
+      return match;
+    }
+    return null;
+  },
+  deleteLead: (id) => {
+    const initialLength = global.mockDbLeads.length;
+    global.mockDbLeads = global.mockDbLeads.filter(l => l.id !== id);
+    return global.mockDbLeads.length < initialLength;
+  }
 };
