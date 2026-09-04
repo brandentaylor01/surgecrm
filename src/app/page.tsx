@@ -294,6 +294,18 @@ export default function RainmakerProductionDashboard() {
             </div>
           </div>
         ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-2 bg-[#060608] p-4 rounded-lg border border-[#121215]">
+                <span className="text-[9px] text-neutral-500 block mb-1">Create New Opportunity Entry ({activeWorkspace})</span>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <input type="text" placeholder="COMPANY ACCOUNT *" required value={form.companyAccount} onChange={(e) => setForm({ ...form, companyAccount: e.target.value })} className="bg-[#0b0b0d] p-2.5 rounded border border-[#16161c] text-[#a3a3a3] uppercase font-mono text-[10px] w-full focus:outline-none" />
+                  <input type="text" placeholder="INITIAL CONTACT" value={form.initialContact} onChange={(e) => setForm({ ...form, initialContact: e.target.value })} className="bg-[#0b0b0d] p-2.5 rounded border border-[#16161c] text-[#a3a3a3] uppercase font-mono text-[10px] w-full focus:outline-none" />
+                  <input type="text" placeholder="CITY" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className="bg-[#0b0b0d] p-2.5 rounded border border-[#16161c] text-[#a3a3a3] uppercase font-mono text-[10px] w-full focus:outline-none" />
+                </div>
+                <textarea placeholder="ADD ENTRY MEMO / ACTIONABLE NOTE DETAILS HERE..." value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className="bg-[#0b0b0d] p-2.5 rounded border border-[#16161c] text-[#a3a3a3] uppercase font-mono text-[10px] w-full h-16 resize-none focus:outline-none" />
+                <div className="flex justify-end"><button type="submit" className="border border-[#22222a] bg-[#111116] text-[#e5e5e5] px-6 py-2 rounded font-bold text-[9px] hover:bg-[#1c1c24] transition cursor-pointer">SUBMIT TO QUALIFYING...</button></div>
+              </form>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 {(["qualifying", "proposal", "secured"] as const).map((statusKey) => {
@@ -336,36 +348,36 @@ export default function RainmakerProductionDashboard() {
                       <span className="text-[8px] text-neutral-500 block font-bold">INTERACTION MEMO</span>
                       {!isEditingNotes ? (
                         <button onClick={() => { setIsEditingNotes(true); setEditedNotes(sel.notes || ""); }} className="text-[8px] text-indigo-400 hover:underline cursor-pointer">EDIT MEMO</button>
+                      ) : (
+                        <div className="flex gap-2">
+                          <button onClick={saveNotesUpdate} className="text-[8px] text-green-400 hover:underline cursor-pointer">SAVE</button>
+                          <button onClick={() => setIsEditingNotes(false)} className="text-[8px] text-neutral-500 hover:underline cursor-pointer">CANCEL</button>
+                        </div>
+                      )}
+                    </div>
+                    {!isEditingNotes ? (
+                      <p className="text-neutral-300 normal-case">{sel.notes || "NO STRATEGIC LOGS CAPTURED YET."}</p>
                     ) : (
-                      <div className="flex gap-2">
-                        <button onClick={saveNotesUpdate} className="text-[8px] text-green-400 hover:underline cursor-pointer">SAVE</button>
-                        <button onClick={() => setIsEditingNotes(false)} className="text-[8px] text-neutral-500 hover:underline cursor-pointer">CANCEL</button>
-                      </div>
+                      <textarea value={editedNotes} onChange={(e) => setEditedNotes(e.target.value)} className="bg-[#121217] text-white p-2 rounded border border-neutral-800 text-[10px] w-full h-20 resize-none uppercase font-mono focus:outline-none" />
                     )}
                   </div>
-                  {!isEditingNotes ? (
-                    <p className="text-neutral-300 normal-case">{sel.notes || "NO STRATEGIC LOGS CAPTURED YET."}</p>
-                  ) : (
-                    <textarea value={editedNotes} onChange={(e) => setEditedNotes(e.target.value)} className="bg-[#121217] text-white p-2 rounded border border-neutral-800 text-[10px] w-full h-20 resize-none uppercase font-mono focus:outline-none" />
-                  )}
-                </div>
 
-                <div className="space-y-1.5 border-t border-[#141419] pt-3">
-                  <span className="text-[9px] text-neutral-400 block font-bold">PROPOSAL SUMMARY</span>
-                  {(sel.proposals || []).length === 0 ? (
-                    <p className="text-[9px] text-neutral-600 italic">No products provisioned yet.</p>
-                  ) : (
-                    (sel.proposals || []).map(item => (
-                      <div key={item.id} className="flex justify-between items-center text-[9px] bg-[#0b0b0d] p-2 border border-[#16161c] rounded">
-                        <div>
-                          <span className="text-white block font-bold">{item.name} (x{item.quantity})</span>
-                          <span className="text-neutral-500 font-sans tracking-normal normal-case">{item.billingCycle}</span>
+                  <div className="space-y-1.5 border-t border-[#141419] pt-3">
+                    <span className="text-[9px] text-neutral-400 block font-bold">PROPOSAL SUMMARY</span>
+                    {(sel.proposals || []).length === 0 ? (
+                      <p className="text-[9px] text-neutral-600 italic">No products provisioned yet.</p>
+                    ) : (
+                      (sel.proposals || []).map(item => (
+                        <div key={item.id} className="flex justify-between items-center text-[9px] bg-[#0b0b0d] p-2 border border-[#16161c] rounded">
+                          <div>
+                            <span className="text-white block font-bold">{item.name} (x{item.quantity})</span>
+                            <span className="text-neutral-500 font-sans tracking-normal normal-case">{item.billingCycle}</span>
+                          </div>
+                          <span className="text-indigo-400 font-bold">${computeItemTotal(item).toFixed(2)}</span>
                         </div>
-                        <span className="text-indigo-400 font-bold">${computeItemTotal(item).toFixed(2)}</span>
-                      </div>
-                    ))
-                  )}
-                </div>
+                      ))
+                    )}
+                  </div>
 
                   <div className="border-t border-[#141419] pt-3 space-y-2">
                     <span className="text-[9px] text-neutral-400 block font-bold">ATTACH LINE ITEMS</span>
