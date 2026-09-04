@@ -26,7 +26,8 @@ export interface Opp {
 interface DetailPanelProps {
   sel: Opp | null;
   stages: string[];
-  setField: (id: string, f: keyof Opp, v: any) => Promise<void>;
+  // Re-named from 'f' to 'field' and 'v' to 'value' to fix Vercel TS2322 error
+  setField: (id: string, field: keyof Opp, value: any) => Promise<void>;
   setSel: React.Dispatch<React.SetStateAction<Opp | null>>;
 }
 
