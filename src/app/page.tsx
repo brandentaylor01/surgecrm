@@ -20,7 +20,7 @@ export interface Opp {
   email?: string;
   phone?: string;
   status: "qualifying" | "proposal" | "secured";
-  clientWorkspace: "rainmaker" | "aim" | "televoi";
+  clientWorkspace: string;
   notes?: string;
   proposals?: ProposalItem[];
 }
@@ -32,7 +32,8 @@ export interface GlobalProduct {
 }
 
 export default function RainmakerProductionDashboard() {
-  const [activeWorkspace, setActiveWorkspace] = useState<"rainmaker" | "aim" | "televoi">("rainmaker");
+  const [workspaces, setWorkspaces] = useState<string[]>(["rainmaker", "aim", "televoi"]);
+  const [activeWorkspace, setActiveWorkspace] = useState<string>("rainmaker");
   const [opps, setOpps] = useState<Opp[]>([]);
   const [sel, setSel] = useState<Opp | null>(null);
   const [isEditingNotes, setIsEditingNotes] = useState(false);
@@ -52,6 +53,24 @@ export default function RainmakerProductionDashboard() {
   const [proposalForm, setProposalForm] = useState({
     productId: "", quantity: 1, billingCycle: 'one-time' as ProposalItem['billingCycle'], contractYears: 1
   });
+
+  const handleWorkspaceChange = (val: string) => {
+    if (val === "ADD_NEW_CLIENT_PROMPT") {
+      const name = prompt("ENTER NEW CLIENT BUSINESS NAME:");
+      if (name && name.trim() !== "") {
+        const cleanName = name.trim().toLowerCase();
+        if (!workspaces.includes(cleanName)) {
+          setWorkspaces([...workspaces, cleanName]);
+          setActiveWorkspace(cleanName);
+        } else {
+          setActiveWorkspace(cleanName);
+        }
+      }
+    } else {
+      setActiveWorkspace(val);
+      setSel(null);
+    }
+  };
 
   const fetchLiveLeads = async () => {
     try {
@@ -193,15 +212,13 @@ export default function RainmakerProductionDashboard() {
               <span className="text-[8px] text-neutral-600 mb-1">SELECT ACTIVE WORKSPACE</span>
               <select 
                 value={activeWorkspace} 
-                onChange={(e) => {
-                  setActiveWorkspace(e.target.value as any);
-                  setSel(null);
-                }}
+                onChange={(e) => handleWorkspaceChange(e.target.value)}
                 className="bg-[#0c0c0f] border border-[#22222a] text-white px-3 py-2 rounded-lg font-bold text-[10px] focus:outline-none cursor-pointer"
               >
-                <option value="rainmaker">Rainmaker (Internal Agency)</option>
-                <option value="aim">Aim Restoration (Client Pipeline)</option>
-                <option value="televoi">Televoi (Client Pipeline)</option>
+                {workspaces.map(w => (
+                  <option key={w} value={w}>{w === 'rainmaker' ? 'Rainmaker (Internal Agency)' : `${w} (Client Pipeline)`}</option>
+                ))}
+                <option value="ADD_NEW_CLIENT_PROMPT" className="text-indigo-400 font-bold">+ ADD CLIENT...</option>
               </select>
             </div>
             <div className="text-right text-[10px] space-y-0.5">
