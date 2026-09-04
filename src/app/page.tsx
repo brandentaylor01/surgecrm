@@ -31,7 +31,7 @@ export interface GlobalProduct {
   basePrice: number;
 }
 
-export default function RainmakerDashboard() {
+export default function RainmakerProductionDashboard() {
   const [activeWorkspace, setActiveWorkspace] = useState<"rainmaker" | "aim" | "televoi">("rainmaker");
   const [opps, setOpps] = useState<Opp[]>([]);
   const [sel, setSel] = useState<Opp | null>(null);
@@ -59,17 +59,12 @@ export default function RainmakerDashboard() {
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
       setOpps(data || []);
-      
       if (sel) {
         const updatedSel = (data || []).find((o: Opp) => o.id === sel.id);
-        if (updatedSel) {
-          setSel(updatedSel);
-        } else {
-          setSel(null);
-        }
+        setSel(updatedSel || null);
       }
     } catch (error) {
-      console.error("Data synchronization fault:", error);
+      console.error("Sync error:", error);
     }
   };
 
@@ -106,7 +101,7 @@ export default function RainmakerDashboard() {
         fetchLiveLeads();
       }
     } catch (error) {
-      console.error("Lead submission crash:", error);
+      console.error("Submission error:", error);
     }
   };
 
@@ -120,7 +115,6 @@ export default function RainmakerDashboard() {
   const updateStage = async (oppId: string, nextStatus: "qualifying" | "proposal" | "secured") => {
     setOpps(prev => prev.map(o => o.id === oppId ? { ...o, status: nextStatus } : o));
     if (sel?.id === oppId) setSel(p => p ? { ...p, status: nextStatus } : null);
-
     await fetch('/api/opportunities', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -152,7 +146,7 @@ export default function RainmakerDashboard() {
         fetchLiveLeads();
       }
     } catch (error) {
-      console.error("Deletion execution fault:", error);
+      console.error("Deletion error:", error);
     }
   };
 
@@ -183,6 +177,7 @@ export default function RainmakerDashboard() {
       body: JSON.stringify({ id: oppId, field: 'proposals', value: modernProposals })
     });
   };
+
   return (
     <div className="min-h-screen bg-[#020202] text-[#737373] p-8 text-[11px] uppercase tracking-wider font-mono flex flex-col justify-between">
       <div className="w-full space-y-6">
@@ -242,12 +237,9 @@ export default function RainmakerDashboard() {
                     <div className="space-y-2">
                       {stepItems.map(opp => (
                         <div key={opp.id} onClick={() => { setSel(opp); setEditedNotes(opp.notes || ""); setIsEditingNotes(false); }} className={`p-2.5 rounded border transition cursor-pointer relative group ${sel?.id === opp.id ? 'border-indigo-500 bg-[#0d0d14]' : 'border-[#16161c] bg-[#0b0b0d]'}`}>
-                          
                           <button onClick={(e) => { e.stopPropagation(); deleteOpportunity(opp.id); }} className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-[8px] bg-red-950/40 border border-red-900/60 px-1 py-0.5 rounded text-red-400 hover:bg-red-900 hover:text-white transition cursor-pointer">DEL</button>
-                          
                           <div className="font-bold text-white pr-6">{opp.companyAccount}</div>
                           <div className="text-[9px] text-neutral-500 mt-1">Value: ${computeOppTotal(opp).toFixed(2)}</div>
-                          
                           <div className="mt-2 flex gap-1 justify-end">
                             {statusKey !== 'qualifying' && <button onClick={(e) => { e.stopPropagation(); updateStage(opp.id, 'qualifying'); }} className="text-[8px] bg-neutral-900 border border-neutral-800 px-1 py-0.5 rounded text-neutral-400 hover:text-white cursor-pointer">◀</button>}
                             {statusKey !== 'secured' && <button onClick={(e) => { e.stopPropagation(); updateStage(opp.id, statusKey === 'qualifying' ? 'proposal' : 'secured'); }} className="text-[8px] bg-neutral-900 border border-neutral-800 px-1 py-0.5 rounded text-neutral-400 hover:text-white cursor-pointer">▶</button>}
@@ -284,15 +276,10 @@ export default function RainmakerDashboard() {
                       </div>
                     )}
                   </div>
-                  
                   {!isEditingNotes ? (
                     <p className="text-neutral-300 normal-case">{sel.notes || "NO STRATEGIC LOGS CAPTURED YET."}</p>
                   ) : (
-                    <textarea 
-                      value={editedNotes} 
-                      onChange={(e) => setEditedNotes(e.target.value)}
-                      className="bg-[#121217] text-white p-2 rounded border border-neutral-800 text-[10px] w-full h-20 resize-none uppercase font-mono focus:outline-none"
-                    />
+                    <textarea value={editedNotes} onChange={(e) => setEditedNotes(e.target.value)} className="bg-[#121217] text-white p-2 rounded border border-neutral-800 text-[10px] w-full h-20 resize-none uppercase font-mono focus:outline-none" />
                   )}
                 </div>
 
@@ -315,6 +302,44 @@ export default function RainmakerDashboard() {
 
                 <div className="border-t border-[#141419] pt-3 space-y-2">
                   <span className="text-[9px] text-neutral-400 block font-bold">ATTACH LINE ITEMS</span>
-                  <select 
-                    value={proposalForm.productId} 
-                    onChange={e => setProposalForm({...proposalForm, productId: e.target.value})}
+                  <select value={proposalForm.productId} onChange={e => setProposalForm({...proposalForm, productId: e.target.value})} className="bg-[#0b0b0d] border border-[#16161c] w-full text-white p-2 text-[10px] rounded focus:outline-none cursor-pointer" >
+                    <option value="">-- CHOOSE PRODUCT --</option>
+                    {globalProducts.map(p => <option key={p.id} value={p.id}>{p.name} (${p.basePrice})</option>)}
+                  </select>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input type="number" min="1" placeholder="QTY" value={proposalForm.quantity} onChange={e => setProposalForm({...proposalForm, quantity: parseInt(e.target.value) || 1})} className="bg-[#0b0b0d] border border-[#16161c] text-white p-2 rounded w-full text-[10px] focus:outline-none" />
+                    <select value={proposalForm.billingCycle} onChange={e => setProposalForm({...proposalForm, billingCycle: e.target.value as any})} className="bg-[#0b0b0d] border border-[#16161c] text-white p-2 rounded w-full text-[10px] cursor-pointer focus:outline-none">
+                      <option value="one-time">One-Time Fee</option>
+                      <option value="monthly_1yr">Monthly (1 Yr Contract)</option>
+                      <option value="monthly_multi">Monthly (Multi-Yr Contract)</option>
+                    </select>
+                  </div>
+                  {proposalForm.billingCycle === 'monthly_multi' && (
+                    <input type="number" min="2" placeholder="CONTRACT YEARS" value={proposalForm.contractYears} onChange={e => setProposalForm({...proposalForm, contractYears: parseInt(e.target.value) || 2})} className="bg-[#0b0b0d] border border-[#16161c] text-white p-2 rounded w-full text-[10px] focus:outline-none" />
+                  )}
+                  <button type="button" onClick={() => attachProposalItem(sel.id)} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold p-2 rounded transition cursor-pointer">
+                    + APPEND TO PROPOSAL
+                  </button>
+                </div>
+
+                <div className="border-t border-[#141419] pt-3 space-y-2">
+                  <span className="text-[9px] text-neutral-500 block">PROVISION PRODUCT INTO REGISTRY (ON THE FLY)</span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input type="text" placeholder="PRODUCT NAME" value={newProdName} onChange={e => setNewProdName(e.target.value)} className="bg-[#0b0b0d] border border-[#16161c] p-2 text-white text-[9px] rounded focus:outline-none" />
+                    <input type="number" placeholder="UNIT PRICE" value={newProdPrice} onChange={e => setNewProdPrice(e.target.value)} className="bg-[#0b0b0d] border border-[#16161c] p-2 text-white text-[9px] rounded focus:outline-none" />
+                  </div>
+                  <button type="button" onClick={addProductToRegistry} className="w-full border border-neutral-700 hover:border-white text-neutral-400 hover:text-white p-1.5 text-[9px] transition cursor-pointer">
+                    INJECT INTO PRODUCT REGISTRY
+                  </button>
+                </div>
+              </>
+            ) : (
+              <p className="text-neutral-600 text-center italic py-12">Select an active card to configure proposals and evaluate logs.</p>
+            )}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+}

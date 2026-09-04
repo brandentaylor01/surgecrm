@@ -1,4 +1,3 @@
-// Persistent local data layer caching your tenant accounts
 if (!global.mockDbLeads) {
   global.mockDbLeads = [];
 }
@@ -7,10 +6,7 @@ export const database = {
   saveLead: (lead) => { global.mockDbLeads.push(lead); return lead; },
   updateLead: (id, field, value) => {
     const match = global.mockDbLeads.find(l => l.id === id);
-    if (match) {
-      match[field] = value;
-      return match;
-    }
+    if (match) { match[field] = value; return match; }
     return null;
   },
   deleteLead: (id) => {
