@@ -3,16 +3,18 @@ import type { NextRequest } from 'next/request';
 
 export function middleware(request: NextRequest) {
   const sessionToken = request.cookies.get('admin_session');
-  const { pathname } = request.nextUrl;
+  const url = request.nextUrl.clone();
 
-  // 1. If not logged in and trying to view the site, bounce to /login
-  if (!sessionToken && !pathname.startsWith('/login') && !pathname.startsWith('/api/auth')) {
-    return NextResponse.redirect(new URL('/login', request.url));
+  // 1. If not logged in and trying to view the site, redirect to /login
+  if (!sessionToken && !url.pathname.startsWith('/login') && !url.pathname.startsWith('/api/auth')) {
+    url.pathname = '/login';
+    return NextResponse.redirect(url);
   }
 
-  // 2. If already logged in and going to /login, send them straight to the dashboard
-  if (sessionToken && pathname.startsWith('/login')) {
-    return NextResponse.redirect(new URL('/', request.url));
+  // 2. If already logged in and going to /login, redirect straight to the dashboard
+  if (sessionToken && url.pathname.startsWith('/login')) {
+    url.pathname = '/';
+    return NextResponse.redirect(url);
   }
 
   return NextResponse.next();
@@ -20,7 +22,6 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Protect all pages except authentication APIs and static system assets
     '/((?!api/auth|_next/static|_next/image|favicon.ico).*)',
   ],
 };
