@@ -107,7 +107,6 @@ export default function RainmakerProductionDashboard() {
   };
 
   const currentWorkspaceOpps = opps.filter(o => o.clientWorkspace === activeWorkspace);
-  const totalGrossValue = currentWorkspaceOpps.reduce((acc, curr) => acc + computeOppTotal(curr), 0);
 
   const computeTimeframeMetrics = () => {
     const closedWon = currentWorkspaceOpps.filter(o => o.status === "secured");
@@ -214,6 +213,102 @@ export default function RainmakerProductionDashboard() {
       body: JSON.stringify({ id: oppId, field: 'proposals', value: modernProposals })
     });
   };
+
+  return (
+    <div className="min-h-screen bg-[#020202] text-[#737373] p-8 text-[11px] uppercase tracking-wider font-mono flex flex-col justify-between">
+      <div className="w-full space-y-6">
+        
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-baseline border-b border-[#141414] pb-4 gap-4">
+          <div>
+            <h1 className="text-sm font-bold tracking-[0.25em] text-[#e5e5e5]">RAINMAKER ENGINE</h1>
+            <p className="text-[9px] text-[#404040] mt-0.5">White-Label Management Console</p>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <div className="flex flex-col">
+              <span className="text-[8px] text-neutral-600 mb-1">SELECT ACTIVE WORKSPACE</span>
+              <select 
+                value={activeWorkspace} 
+                onChange={(e) => handleWorkspaceChange(e.target.value)}
+                className="bg-[#0c0c0f] border border-[#22222a] text-white px-3 py-2 rounded-lg font-bold text-[10px] focus:outline-none cursor-pointer"
+              >
+                {workspaces.map(w => (
+                  <option key={w} value={w}>{w === 'rainmaker' ? 'Rainmaker (Internal Agency)' : `${w} (Client Pipeline)`}</option>
+                ))}
+                <option value="ADD_NEW_CLIENT_PROMPT" className="text-indigo-400 font-bold">+ ADD CLIENT...</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex gap-2 border-b border-[#111115] pb-2">
+          <button onClick={() => setCurrentTab("pipeline")} className={`px-4 py-1.5 rounded transition cursor-pointer font-bold ${currentTab === "pipeline" ? "bg-[#121217] text-white border border-[#22222a]" : "text-neutral-500 hover:text-neutral-300"}`}>
+            📋 Pipeline CRM Board
+          </button>
+          <button onClick={() => setCurrentTab("analytics")} className={`px-4 py-1.5 rounded transition cursor-pointer font-bold ${currentTab === "analytics" ? "bg-[#121217] text-white border border-[#22222a]" : "text-neutral-500 hover:text-neutral-300"}`}>
+            📊 Salesforce Revenue Analytics
+          </button>
+        </div>
+
+        {currentTab === "analytics" ? (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+              <div className="bg-[#060608] border border-[#131317] p-4 rounded-lg">
+                <div className="text-neutral-500 text-[9px] font-bold">WEEKLY TARGET INCOME</div>
+                <div className="text-white font-sans text-lg font-bold mt-1">${metrics.weekly.toFixed(2)}</div>
+                <div className="text-neutral-600 text-[8px] mt-1">GOAL PROJECTIONS CALIBRATED</div>
+              </div>
+              <div className="bg-[#060608] border border-[#131317] p-4 rounded-lg">
+                <div className="text-neutral-500 text-[9px] font-bold">MONTHLY PROJECTED ACV</div>
+                <div className="text-indigo-400 font-sans text-lg font-bold mt-1">${metrics.monthly.toFixed(2)}</div>
+                <div className="text-neutral-600 text-[8px] mt-1">MONTHLY RUN RATE RECURRING</div>
+              </div>
+              <div className="bg-[#060608] border border-[#131317] p-4 rounded-lg">
+                <div className="text-neutral-500 text-[9px] font-bold">QUARTERLY ARR SCHEDULE</div>
+                <div className="text-emerald-400 font-sans text-lg font-bold mt-1">${metrics.quarterly.toFixed(2)}</div>
+                <div className="text-neutral-600 text-[8px] mt-1">REVENUE VELOCITY BENCHMARK</div>
+              </div>
+              <div className="bg-[#060608] border border-[#131317] p-4 rounded-lg">
+                <div className="text-neutral-500 text-[9px] font-bold">YEARLY CONTRACT VALUES</div>
+                <div className="text-white font-sans text-lg font-bold mt-1">${metrics.yearly.toFixed(2)}</div>
+                <div className="text-neutral-600 text-[8px] mt-1">TOTAL CLOSED SECURED ARR</div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-[#060608] border border-[#121215] p-4 rounded-lg space-y-3">
+                <span className="text-neutral-400 font-bold block">📈 PIPELINE VELOCITY MATRIX</span>
+                <div className="space-y-2 font-sans tracking-normal">
+                  <div className="flex justify-between border-b border-[#111115] pb-1.5"><span className="text-neutral-500 uppercase font-mono text-[10px]">WIN RATE RATIO:</span><span className="text-white font-bold">{salesforceTelemetry.winRate.toFixed(1)}%</span></div>
+                  <div className="flex justify-between border-b border-[#111115] pb-1.5"><span className="text-neutral-500 uppercase font-mono text-[10px]">AVERAGE DEAL SIZE:</span><span className="text-indigo-400 font-bold">${salesforceTelemetry.avgDealSize.toFixed(2)}</span></div>
+                  <div className="flex justify-between pb-0.5"><span className="text-neutral-500 uppercase font-mono text-[10px]">TOTAL OPPORTUNITIES:</span><span className="text-white font-bold">{currentWorkspaceOpps.length}</span></div>
+                </div>
+              </div>
+              <div className="bg-[#060608] border border-[#121215] p-4 rounded-lg flex flex-col justify-center items-center text-center">
+                <span className="text-neutral-500 text-[9px] tracking-widest font-mono uppercase mb-2">QUARTERLY REVENUE GOAL PROGRESS</span>
+                <div className="w-full bg-[#111115] rounded-full h-2.5 overflow-hidden border border-[#16161c]">
+                  <div className="bg-indigo-500 h-full rounded-full transition-all" style={{ width: `${Math.min(salesforceTelemetry.winRate * 1.5, 100)}%` }}></div>
+                </div>
+                <span className="text-[9px] text-neutral-400 font-bold uppercase mt-2">PERFORMANCE TRACKING CONTINUOUS LOGS</span>
+              </div>
+            </div>
+          </div>
+        ) : (
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {(["qualifying", "proposal", "secured"] as const).map((statusKey) => {
+                  const stepItems = currentWorkspaceOpps.filter(o => o.status === statusKey);
+                  return (
+                    <div key={statusKey} className="bg-[#060608] rounded-lg border border-[#131317] p-3 min-h-[320px]">
+                      <div className="border-b border-[#141419] pb-2 mb-3 flex justify-between"><span className="font-bold text-neutral-400">{statusKey}</span><span className="text-[#404040] font-bold">{stepItems.length}</span></div>
+                      <div className="space-y-2">
+                        {stepItems.map(opp => (
+                          <div key={opp.id} onClick={() => { setSel(opp); setEditedNotes(opp.notes || ""); setIsEditingNotes(false); }} className={`p-2.5 rounded border transition cursor-pointer relative group ${sel?.id === opp.id ? 'border-indigo-500 bg-[#0d0d14]' : 'border-[#16161c] bg-[#0b0b0d]'}`}>
+                            <button onClick={(e) => { e.stopPropagation(); deleteOpportunity(opp.id); }} className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-[8px] bg-red-950/40 border border-red-900/60 px-1 py-0.5 rounded text-red-400 hover:bg-red-900 hover:text-white transition cursor-pointer">DEL</button>
+                            <div className="font-bold text-white pr-6">{opp.companyAccount}</div>
+                            <div className="text-[9px] text-neutral-500 mt-1">Value: ${computeOppTotal(opp).toFixed(2)}</div>
+                            <div className="mt-2 flex gap-1 justify-end">
+                              {statusKey !== 'qualifying' && <button onClick={(e) => { e.stopPropagation(); updateStage(opp.id, 'qualifying'); }} className="text-[8px] bg-neutral-900 border border-neutral-800 px-1 py-0.5 rounded text-neutral-400 hover:text-white cursor-pointer">◀</button>}
                               {statusKey !== 'secured' && <button onClick={(e) => { e.stopPropagation(); updateStage(opp.id, statusKey === 'qualifying' ? 'proposal' : 'secured'); }} className="text-[8px] bg-neutral-900 border border-neutral-800 px-1 py-0.5 rounded text-neutral-400 hover:text-white cursor-pointer">▶</button>}
                             </div>
                           </div>
@@ -241,36 +336,36 @@ export default function RainmakerProductionDashboard() {
                       <span className="text-[8px] text-neutral-500 block font-bold">INTERACTION MEMO</span>
                       {!isEditingNotes ? (
                         <button onClick={() => { setIsEditingNotes(true); setEditedNotes(sel.notes || ""); }} className="text-[8px] text-indigo-400 hover:underline cursor-pointer">EDIT MEMO</button>
-                      ) : (
-                        <div className="flex gap-2">
-                          <button onClick={saveNotesUpdate} className="text-[8px] text-green-400 hover:underline cursor-pointer">SAVE</button>
-                          <button onClick={() => setIsEditingNotes(false)} className="text-[8px] text-neutral-500 hover:underline cursor-pointer">CANCEL</button>
-                        </div>
-                      )}
-                    </div>
-                    {!isEditingNotes ? (
-                      <p className="text-neutral-300 normal-case">{sel.notes || "NO STRATEGIC LOGS CAPTURED YET."}</p>
                     ) : (
-                      <textarea value={editedNotes} onChange={(e) => setEditedNotes(e.target.value)} className="bg-[#121217] text-white p-2 rounded border border-neutral-800 text-[10px] w-full h-20 resize-none uppercase font-mono focus:outline-none" />
+                      <div className="flex gap-2">
+                        <button onClick={saveNotesUpdate} className="text-[8px] text-green-400 hover:underline cursor-pointer">SAVE</button>
+                        <button onClick={() => setIsEditingNotes(false)} className="text-[8px] text-neutral-500 hover:underline cursor-pointer">CANCEL</button>
+                      </div>
                     )}
                   </div>
+                  {!isEditingNotes ? (
+                    <p className="text-neutral-300 normal-case">{sel.notes || "NO STRATEGIC LOGS CAPTURED YET."}</p>
+                  ) : (
+                    <textarea value={editedNotes} onChange={(e) => setEditedNotes(e.target.value)} className="bg-[#121217] text-white p-2 rounded border border-neutral-800 text-[10px] w-full h-20 resize-none uppercase font-mono focus:outline-none" />
+                  )}
+                </div>
 
-                  <div className="space-y-1.5 border-t border-[#141419] pt-3">
-                    <span className="text-[9px] text-neutral-400 block font-bold">PROPOSAL SUMMARY</span>
-                    {(sel.proposals || []).length === 0 ? (
-                      <p className="text-[9px] text-neutral-600 italic">No products provisioned yet.</p>
-                    ) : (
-                      (sel.proposals || []).map(item => (
-                        <div key={item.id} className="flex justify-between items-center text-[9px] bg-[#0b0b0d] p-2 border border-[#16161c] rounded">
-                          <div>
-                            <span className="text-white block font-bold">{item.name} (x{item.quantity})</span>
-                            <span className="text-neutral-500 font-sans tracking-normal normal-case">{item.billingCycle}</span>
-                          </div>
-                          <span className="text-indigo-400 font-bold">${computeItemTotal(item).toFixed(2)}</span>
+                <div className="space-y-1.5 border-t border-[#141419] pt-3">
+                  <span className="text-[9px] text-neutral-400 block font-bold">PROPOSAL SUMMARY</span>
+                  {(sel.proposals || []).length === 0 ? (
+                    <p className="text-[9px] text-neutral-600 italic">No products provisioned yet.</p>
+                  ) : (
+                    (sel.proposals || []).map(item => (
+                      <div key={item.id} className="flex justify-between items-center text-[9px] bg-[#0b0b0d] p-2 border border-[#16161c] rounded">
+                        <div>
+                          <span className="text-white block font-bold">{item.name} (x{item.quantity})</span>
+                          <span className="text-neutral-500 font-sans tracking-normal normal-case">{item.billingCycle}</span>
                         </div>
-                      ))
-                    )}
-                  </div>
+                        <span className="text-indigo-400 font-bold">${computeItemTotal(item).toFixed(2)}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
 
                   <div className="border-t border-[#141419] pt-3 space-y-2">
                     <span className="text-[9px] text-neutral-400 block font-bold">ATTACH LINE ITEMS</span>
