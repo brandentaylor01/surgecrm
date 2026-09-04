@@ -1,78 +1,60 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-import { getLeads } from '../../../mockDb';
 
-const fp = path.join(process.cwd(), 'leads.json');
+let mockDbLeads: any[] = [];
 
-export async function GET() { 
-  return NextResponse.json(getLeads()); 
-}
-
-export async function POST(r: Request) {
+export async function GET() {
   try {
-    const b = await r.json();
-    const processedValue = Number(b.value) || 0;
-    const initialQty1 = Number(b.qty1) || 0;
-    const initialQty2 = Number(b.qty2) || 0;
-
-    const nl = { 
-      id: `opp_${Date.now()}`, 
-      company: b.company, 
-      value: processedValue,
-      status: b.status || 'qualifying',
-      clientKey: b.clientKey || 'rainmaker',
-      qty1: initialQty1,
-      qty2: initialQty2,
-      city: b.city || '',
-      contact: b.contact || ''
-    };
-
-    const ls = getLeads();
-    ls.unshift(nl);
-    fs.writeFileSync(fp, JSON.stringify(ls, null, 2));
-    return NextResponse.json({ success: true, lead: nl });
-  } catch { 
-    return NextResponse.json({ error: 'Failed payload assembly' }, { status: 500 }); 
+    return NextResponse.json(mockDbLeads, { status: 200 });
+  } catch (error) {
+    console.error("Database query exception:", error);
+    return NextResponse.json({ error: "Internal Database Exception" }, { status: 500 });
   }
 }
 
-export async function PATCH(r: Request) {
+export async function POST(request: Request) {
   try {
-    const b = await r.json();
-    const { id, field, value } = b;
-    
-    if (!id || !field) {
-      return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
+    const body = await request.json();
+    const { companyAccount, initialContact, city, address, email, phone } = body;
+
+    if (!companyAccount || companyAccount.trim() === "") {
+      return NextResponse.json(
+        { error: "Entity Constraint Error: Missing structural required parameter 'companyAccount'" }, 
+        { status: 400 }
+      );
     }
 
-    const ls = getLeads();
-    const updated = ls.map((l: any) => {
-      if (l.id === id) {
-        const processedValue = (field === 'value' || field === 'qty1' || field === 'qty2') 
-          ? Number(value) 
-          : value;
-        return { ...l, [field]: processedValue };
-      }
-      return l;
-    });
+    const newOpportunity = {
+      id: `opp_${Date.now()}`,
+      companyAccount: companyAccount.trim(),
+      initialContact: initialContact || "",
+      city: city || "",
+      address: address || "",
+      email: email || "",
+      phone: phone || "",
+      status: "qualifying"
+    };
 
-    fs.writeFileSync(fp, JSON.stringify(updated, null, 2));
-    return NextResponse.json({ success: true });
-  } catch { 
-    return NextResponse.json({ error: 'Failed' }, { status: 500 }); 
+    mockDbLeads.push(newOpportunity);
+    return NextResponse.json(newOpportunity, { status: 201 });
+
+  } catch (error) {
+    console.error("Pipeline processing failure:", error);
+    return NextResponse.json({ error: "Pipeline processing failure" }, { status: 500 });
   }
 }
 
-export async function DELETE(r: Request) {
+export async function PATCH(request: Request) {
   try {
-    const { searchParams } = new URL(r.url);
-    const id = searchParams.get('id');
-    const ls = getLeads();
-    const filtered = ls.filter((l: any) => l.id !== id);
-    fs.writeFileSync(fp, JSON.stringify(filtered, null, 2));
-    return NextResponse.json({ success: true });
-  } catch { 
-    return NextResponse.json({ error: 'Failed' }, { status: 500 }); 
+    const { id, field, value } = await request.json();
+    const match = mockDbLeads.find(o => o.id === id);
+    
+    if (match) {
+      match[field] = value;
+      return NextResponse.json({ success: true, updated: match }, { status: 200 });
+    }
+    return NextResponse.json({ error: "Record not matched" }, { status: 404 });
+  } catch (error) {
+    console.error("Mutation failed:", error);
+    return NextResponse.json({ error: "Mutation failed" }, { status: 500 });
   }
 }
