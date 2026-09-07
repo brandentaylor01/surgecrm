@@ -16,6 +16,7 @@ export interface Opp {
   status: string; 
   city?: string; 
   contact?: string; 
+  email?: string; 
   clientKey: string; 
   type?: 'product' | 'service'; 
   qty1?: number;
@@ -106,15 +107,10 @@ export default function DetailPanel({ sel, stages, setField, setSel }: DetailPan
 
   const triggerFollowUpEmail = () => {
     const subject = encodeURIComponent('PROPOSAL UPDATE - ' + sel.company);
-    const body = encodeURIComponent(
-      'HI ' + (sel.contact || 'TEAM') + ',\n\n' +
-      'FOLLOWING UP ON OUR DISCUSSION REGARDING THE PROPOSAL FOR ' + sel.company + '.\n\n' +
-      'THE TOTAL PROPOSED BALANCE STANDS AT $' + subtotal.toLocaleString() + '.\n\n' +
-      'LET ME KNOW IF YOU HAVE ANY QUESTIONS SO WE CAN CONCLUDE ON THIS ESTIMATE.\n\n' +
-      'BEST REGARDS,\n' +
-      'SALES MATRIX'
-    );
-    window.location.href = 'mailto:?subject=' + subject + '&body=' + body;
+    const targetEmail = sel.email ? sel.email : '';
+    const bodyStr = 'HI ' + (sel.contact || 'TEAM') + ',\n\nFOLLOWING UP ON OUR DISCUSSION REGARDING THE PROPOSAL FOR ' + sel.company + '.\n\nTHE TOTAL PROPOSED BALANCE STANDS AT $' + subtotal.toLocaleString() + '.\n\nLET ME KNOW IF YOU HAVE ANY QUESTIONS SO WE CAN CONCLUDE ON THIS ESTIMATE.\n\nBEST REGARDS,\nSALES MATRIX';
+    const body = encodeURIComponent(bodyStr);
+    window.location.href = 'mailto:' + targetEmail + '?subject=' + subject + '&body=' + body;
   };
 
   return (
@@ -245,6 +241,15 @@ export default function DetailPanel({ sel, stages, setField, setSel }: DetailPan
             </button>
           </div>
 
+          <div>
+            <label className="block text-[#404040] text-[9px] mb-1 font-bold">EXECUTIVE DIRECT EMAIL</label>
+            <input 
+              type="text" 
+              value={sel.email || ''} 
+              onChange={(e) => setField(sel.id, 'email', e.target.value)} 
+              className="w-full bg-[#070709] border border-[#17171d] p-2 rounded text-indigo-400 lowercase font-mono text-[10px] focus:outline-none mb-3"
+            />
+          </div>
           <div>
             <label className="block text-[#404040] text-[9px] mb-1 font-bold">TARGET REGION / CITY</label>
             <input 
