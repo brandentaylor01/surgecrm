@@ -3,9 +3,10 @@ import { database } from '../../../mockDb';
 
 export async function GET() {
   try {
-    return NextResponse.json(database.getLeads(), { status: 200 });
+    const leads = await database.getLeads();
+    return NextResponse.json(leads, { status: 200 });
   } catch (error) {
-    return NextResponse.json({ error: "Internal DB Error" }, { status: 500 });
+    return NextResponse.json({ error: "Internal Database Transmission Error" }, { status: 500 });
   }
 }
 
@@ -17,7 +18,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing Parameters" }, { status: 400 });
     }
     const newRecord = {
-      id: `opp_${Date.now()}`,
+      id: body.id || `opp_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
       companyAccount: companyAccount.trim(),
       initialContact: initialContact || "",
       city: city || "",
@@ -29,7 +30,7 @@ export async function POST(request: Request) {
       status: "qualifying",
       proposals: []
     };
-    database.saveLead(newRecord);
+    await database.saveLead(newRecord);
     return NextResponse.json(newRecord, { status: 201 });
   } catch (error) {
     return NextResponse.json({ error: "POST Error" }, { status: 500 });
