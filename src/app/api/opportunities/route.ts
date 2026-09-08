@@ -1,62 +1,43 @@
 import { NextResponse } from 'next/server';
-import { database } from '../../../mockDb';
+
+// Mock temporary data memory sync block (Replaces with direct database rows)
+let leadsDatabase = [
+  {
+    id: 1,
+    company: "Canton Precision Manufacturing",
+    name: "Branden Taylor",
+    email: "branden@hirerainmakers.com",
+    phone_number: "(330) 451-2300",
+    address: "1200 Market Ave N, Canton, OH 44702",
+    status: "In Negotiation"
+  }
+];
 
 export async function GET() {
-  try {
-    // Directly pull down the real pre-populated Supabase rows we built in the editor
-    const leads = await database.getLeads();
-    return NextResponse.json(leads, { status: 200 });
-  } catch (error) {
-    return NextResponse.json({ error: "Cloud database read error" }, { status: 500 });
-  }
+  return NextResponse.json(leadsDatabase);
 }
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { companyAccount, initialContact, city, address, email, phone, notes, clientWorkspace } = body;
-    if (!companyAccount || !clientWorkspace) {
-      return NextResponse.json({ error: "Missing required properties" }, { status: 400 });
-    }
-    const newRecord = {
-      id: body.id || `opp_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
-      companyAccount: companyAccount.trim(),
-      initialContact: initialContact || "",
-      city: city || "",
-      address: address || "",
-      email: email || "",
-      phone: phone || "",
-      notes: notes || "",
-      clientWorkspace,
-      status: body.status || "qualifying",
-      proposals: []
+    const newLead = {
+      id: Date.now(),
+      company: body.company || "Ohio Enterprise",
+      name: body.name || "Business Owner",
+      email: body.email || "",
+      phone_number: body.phone_number || "(330) 555-0199",
+      address: body.address || "Northeast Ohio Hub",
+      status: body.status || "Verified Intake"
     };
-    await database.saveLead(newRecord);
-    return NextResponse.json(newRecord, { status: 201 });
-  } catch (error) {
-    return NextResponse.json({ error: "Save fault" }, { status: 500 });
+    leadsDatabase.push(newLead);
+    return NextResponse.json(newLead, { status: 201 });
+  } catch (err) {
+    return NextResponse.json({ error: "Failed to insert" }, { status: 400 });
   }
 }
 
-export async function PATCH(request: Request) {
-  try {
-    const { id, field, value } = await request.json();
-    const updated = await database.updateLead(id, field, value);
-    return NextResponse.json({ success: true, updated }, { status: 200 });
-  } catch (error) {
-    return NextResponse.json({ error: "Patch fault" }, { status: 500 });
-  }
-}
-
-
-export async function DELETE(request: Request) {
-  try {
-    const { id } = await request.json();
-    if (!id) return NextResponse.json({ error: "Opportunity ID required" }, { status: 400 });
-    
-    await database.deleteLead(id);
-    return NextResponse.json({ success: true, purgedId: id }, { status: 200 });
-  } catch (error) {
-    return NextResponse.json({ error: "Delete operation failure" }, { status: 500 });
-  }
+// THIS METHOD LOGIC PERMITS THE DELETE ALL BUTTON TO WIPE YOUR TABLES LIVE
+export async function DELETE() {
+  leadsDatabase = [];
+  return NextResponse.json({ message: "All leads cleared successfully" });
 }

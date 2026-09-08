@@ -5,37 +5,29 @@ export default function DashboardLeadsPage() {
   const [leads, setLeads] = useState([]);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Consolidated data-fetch routine
   const fetchLeads = () => {
     fetch('/api/opportunities')
       .then((res) => res.json())
       .then((data) => setLeads(data || []))
-      .catch((err) => console.error("Error fetching leads:", err));
+      .catch((err) => console.error("Error fetching data layers:", err));
   };
 
   useEffect(() => {
     fetchLeads();
   }, []);
 
-  // Secure bulk deletion handler function
   const handleDeleteAll = async () => {
-    if (!window.confirm("🚨 Are you absolutely sure you want to delete all leads? This cannot be undone.")) {
+    if (!window.confirm("Are you sure you want to clear your entire lead index?")) {
       return;
     }
-    
     setIsDeleting(true);
     try {
-      // Sends a restful DELETE signal to your API routing channels
       const res = await fetch('/api/opportunities', { method: 'DELETE' });
       if (res.ok) {
         setLeads([]);
-        alert("✨ Successfully cleared your entire lead database queue.");
-      } else {
-        // Fallback: Clear local view state instantly for immediate workspace relief
-        setLeads([]);
       }
     } catch (err) {
-      setLeads([]);
+      console.error(err);
     } finally {
       setIsDeleting(false);
     }
@@ -43,65 +35,51 @@ export default function DashboardLeadsPage() {
 
   return (
     <div className="p-6 min-h-screen bg-background text-foreground font-sans">
-      
-      {/* Salesforce Layout Header with Bulk Action Commands */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 pb-4 border-b border-muted gap-4">
+      <div className="flex justify-between items-center mb-6 pb-4 border-b border-muted">
         <div>
-          <p className="text-xs uppercase tracking-wider text-muted-foreground">SurgeCRM Registry Dashboard</p>
-          <h1 className="text-2xl font-bold font-display">Data Axle Leads Index</h1>
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">SurgeCRM Dashboard</p>
+          <h1 className="text-2xl font-bold font-display">Data Axle Index</h1>
         </div>
-        
-        <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+        <div className="flex items-center gap-3">
           <button
             onClick={handleDeleteAll}
-            disabled={isDeleting || leads.length === 0}
-            className="px-4 py-2 text-xs font-bold uppercase tracking-wider rounded border border-destructive bg-destructive/10 text-destructive hover:bg-destructive hover:text-white transition-all disabled:opacity-40 disabled:pointer-events-none"
+            className="px-3 py-1.5 text-xs font-bold uppercase rounded bg-destructive text-white hover:opacity-90"
           >
-            {isDeleting ? "Wiping..." : "🗑️ Delete All Leads"}
+            {isDeleting ? "Clearing..." : "🗑️ Delete All Leads"}
           </button>
-          
-          <div className="text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded bg-primary/10 text-primary border border-primary/20">
-            Total Pipelines: {leads.length}
+          <div className="text-xs font-bold px-3 py-1.5 rounded bg-muted">
+            Count: {leads.length}
           </div>
         </div>
       </div>
 
-      {/* Salesforce-Style High-Density Detailed Grid Block View */}
       <div className="overflow-x-auto rounded-lg border border-muted bg-card shadow-sm">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-muted text-xs uppercase tracking-wider text-muted-foreground border-b border-muted">
-              <th className="p-4 font-semibold">Company / Account</th>
-              <th className="p-4 font-semibold">Contact Person</th>
-              <th className="p-4 font-semibold">Email Profile</th>
-              <th className="p-4 font-semibold">Phone Number</th>
-              <th className="p-4 font-semibold">Physical Address</th>
-              <th className="p-4 font-semibold">Pipeline Status</th>
+              <th className="p-4">Company / Account</th>
+              <th className="p-4">Contact Person</th>
+              <th className="p-4">Email</th>
+              <th className="p-4">Phone Number</th>
+              <th className="p-4">Physical Address</th>
+              <th className="p-4">Pipeline Status</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-muted text-sm font-medium">
             {leads.map((lead: any) => (
-              <tr key={lead.id} className="hover:bg-accent/40 transition-colors">
+              <tr key={lead.id} className="hover:bg-accent/40">
                 <td className="p-4 font-bold text-primary">{lead.company}</td>
-                <td className="p-4 text-foreground">{lead.name || 'Decision Maker'}</td>
-                <td className="p-4 text-muted-foreground font-normal">{lead.email}</td>
-                <td className="p-4 font-mono text-xs text-foreground/80">{lead.phone_number || '(330) 555-0199'}</td>
-                <td className="p-4 text-xs text-muted-foreground max-w-xs truncate">{lead.address || 'Northeast Ohio'}</td>
+                <td className="p-4">{lead.name}</td>
+                <td className="p-4 text-muted-foreground">{lead.email}</td>
+                <td className="p-4 font-mono text-xs">{lead.phone_number}</td>
+                <td className="p-4 text-xs text-muted-foreground">{lead.address}</td>
                 <td className="p-4">
-                  <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-secondary text-secondary-foreground border border-muted">
-                    {lead.status || 'Verified Intake'}
+                  <span className="px-2 py-0.5 rounded-full text-xs bg-secondary text-secondary-foreground">
+                    {lead.status}
                   </span>
                 </td>
               </tr>
             ))}
-            
-            {leads.length === 0 && (
-              <tr>
-                <td colSpan={6} className="p-12 text-center text-xs uppercase tracking-wider text-muted-foreground font-semibold">
-                  📭 Your pipeline is empty. Run your autonomous cloud collector to load new profiles.
-                </td>
-              </tr>
-            )}
           </tbody>
         </table>
       </div>
