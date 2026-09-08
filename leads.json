@@ -18,7 +18,8 @@
     "email": "ops@clevelandspeedy3pl.com",
     "value": 6.99,
     "assignedClientId": "client_1",
-    "customProposalJson": "[{\"id\":\"item_1788472220272\",\"name\":\"phone line\",\"price\":6.99,\"category\":\"HARDWARE\"}]"
+    "customProposalJson": "[{\"id\":\"item_1788472220272\",\"name\":\"phone line\",\"price\":6.99,\"category\":\"HARDWARE\"}]",
+    "roofing_contacted": true
   },
   {
     "id": "lead_1788458081959",

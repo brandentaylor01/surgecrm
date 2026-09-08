@@ -1,16 +1,16 @@
-name: Rainmaker 24-7 CRM Engine
+name: Rainmaker 24-7 Multi-Tenant CRM Engine
 
 on:
   schedule:
-    # Triggers every single day at exactly 13:30 UTC (9:30 AM Eastern Time)
+    # Triggers every day at 13:30 UTC (9:30 AM Eastern Time)
     - cron: '30 13 * * *'
-  workflow_dispatch: # Allows you to manually trigger it from GitHub anytime
+  workflow_dispatch: # Allows manual one-click activation anytime
 
 jobs:
-  run-outreach:
+  run-all-campaigns:
     runs-on: ubuntu-latest
     steps:
-    - name: Check out repo code
+    - name: Check out repository code
       uses: actions/checkout@v4
 
     - name: Set up Cloud Python
@@ -19,14 +19,17 @@ jobs:
         python-version: '3.9'
         cache: 'pip'
 
-    - name: Install Scraper Requirements
+    - name: Install Cloud Requirements
       run: |
         pip install beautifulsoup4 requests
 
-    - name: Run Premium Target Hunt
+    - name: 🔍 STEP 1 - Run Multi-Tenant Data Hunters
       run: |
         python run_rainmaker_hunt.py
+        python run_televoi_hunt.py
+        python run_roofing_hunt.py
 
-    - name: Run Safe Outreach Sequence
+    - name: ✉️ STEP 2 - Execute Validated Outbound Mailers
       run: |
         python agent_workflow.py
+        python run_roofing_emails.py
