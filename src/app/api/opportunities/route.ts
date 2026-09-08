@@ -47,3 +47,16 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "Patch fault" }, { status: 500 });
   }
 }
+
+
+export async function DELETE(request: Request) {
+  try {
+    const { id } = await request.json();
+    if (!id) return NextResponse.json({ error: "Opportunity ID required" }, { status: 400 });
+    
+    await database.deleteLead(id);
+    return NextResponse.json({ success: true, purgedId: id }, { status: 200 });
+  } catch (error) {
+    return NextResponse.json({ error: "Delete operation failure" }, { status: 500 });
+  }
+}
