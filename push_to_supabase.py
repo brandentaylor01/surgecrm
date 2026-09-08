@@ -3,6 +3,7 @@ import os
 import requests
 
 CSV_FILE = "leads.csv"
+# IMPORTANT: Replace the 'xyz' token section below with your true unique Supabase Project ID layout reference string
 SUPABASE_URL = "https://supabase.co"
 SUPABASE_KEY = "sb_publishable_CJ3gu19QTicTZq_W2M2inA_UglF98EL"
 
@@ -20,11 +21,13 @@ def push_csv_to_supabase():
 
     print("🚀 Initiating cloud database sync from library export...")
     success_count = 0
+    
+    session = requests.Session()
+    session.headers.update(headers)
 
     with open(CSV_FILE, mode='r', encoding='utf-8-sig', errors='ignore') as f:
         reader = csv.DictReader(f)
         for row in reader:
-            # Map common Data Axle export headers dynamically
             company = row.get("Company Name", row.get("Business Name", "Ohio Local Biz")).strip()
             first = row.get("Executive First Name", "").strip()
             last = row.get("Executive Last Name", "").strip()
@@ -44,8 +47,8 @@ def push_csv_to_supabase():
             }
 
             try:
-                res = requests.post(SUPABASE_URL, headers=headers, json=payload, timeout=5)
-                if res.status_code >= 200 and res.status_code < 300:
+                res = session.post(SUPABASE_URL, json=payload, timeout=5)
+                if 200 <= res.status_code < 300:
                     success_count += 1
             except Exception:
                 continue
