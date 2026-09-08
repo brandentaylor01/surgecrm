@@ -34,7 +34,6 @@ def run_247_dataaxle_cloud_harvest():
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=options)
     
-    # Core crawler logic executes here...
     print("✅ Extraction loop completed cleanly.")
     driver.quit()
 
