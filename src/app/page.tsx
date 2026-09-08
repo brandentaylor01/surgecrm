@@ -4,11 +4,11 @@ import SalesforceLayout from '../components/SalesforceLayout';
 import SalesforceWorkspace from '../components/SalesforceWorkspace';
 
 export default function RootLandingPage() {
-  const [opportunities, setOpportunities] = useState([]);
+  // FIXED: Explicitly set the state allocation type container to any[] to bypass never[] checks
+  const [opportunities, setOpportunities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // FIXED: Routes transactions securely back through live internal Vercel dynamic endpoints
     fetch('/api/opportunities')
       .then(res => res.json())
       .then(data => {
@@ -38,7 +38,7 @@ export default function RootLandingPage() {
 
   return (
     <SalesforceLayout>
-      <div className="flex flex-col flex-1 bg-[#09090b]">
+      <div className="flex flex-col flex-1 bg-[#0d0d0e]">
         <div className="p-3 border-b border-[#27272a] bg-[#121214] flex gap-2 font-mono">
           <button onClick={() => purgeStatusCategory("Verified Intake")} className="bg-zinc-900 border border-zinc-700 text-zinc-400 px-2 py-1 rounded text-[11px] hover:bg-zinc-800 transition">
             🗑️ Purge Intake

@@ -6,7 +6,7 @@ interface Opportunity {
   phone: string; address: string; value: number; status: string;
 }
 
-export default function SalesforceWorkspace({ initialLeads = [] }) {
+export default function SalesforceWorkspace({ initialLeads = [] }: { initialLeads: any[] }) {
   const [leads, setLeads] = useState<Opportunity[]>(initialLeads);
   
   const triggerQuickSale = (id: string) => alert(`⚡ 1-Click Sale Executed for Deal Account: ${id}`);
