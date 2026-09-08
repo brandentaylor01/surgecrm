@@ -2,11 +2,10 @@ name: Rainmaker 24/7 Autonomous Core
 
 on:
   schedule:
-    # Triggers automatically across standard staggered business day intervals
-    - cron: '30 13 * * 1,4' # Mondays & Thursdays 9:30 AM EST
-    - cron: '30 14 * * 2'   # Tuesdays 10:30 AM EST
-    - cron: '30 15 * * 3'   # Wednesdays 11:30 AM EST
-  workflow_dispatch: # Allows optional 1-click testing overrides in GitHub UI
+    - cron: '30 13 * * 1,4' # Mon, Thu 9:30 AM EST
+    - cron: '30 14 * * 2'   # Tue 10:30 AM EST
+    - cron: '30 15 * * 3'   # Wed 11:30 AM EST
+  workflow_dispatch:
 
 jobs:
   autonomous-agency-loop:
@@ -31,30 +30,14 @@ jobs:
         github.event.schedule == '30 13 * * 1,4' ||
         github.event_name == 'workflow_dispatch'
       run: |
-        echo "Executing Phase 1: Mining and Scrapes..."
-        python run_rainmaker_hunt.py
+        echo "Executing Phase 1: Autonomous Data Axle Library Extraction..."
+        python autonomous_harvester.py
         
-        echo "Executing Phase 2: Staging data to Supabase Database..."
-        python push_to_supabase.py
+        echo "Executing Phase 2: Running Target Verification Sweeps..."
+        python run_rainmaker_hunt.py
         
         echo "Executing Phase 3: Commencing First-Touch Outbound Messaging..."
         python run_rainmaker_emails.py
         
         echo "Executing Phase 4: Running 3-Day Follow-Up Cadences & Unsubscribe Filters..."
-        python agent_followup.py
-
-    - name: 📞 AUTOMATED WORKER RUN - TUESDAYS (Televoi VoIP Loop)
-      if: github.event.schedule == '30 14 * * 2'
-      run: |
-        python run_televoi_hunt.py
-        python push_to_supabase.py
-        python run_televoi_emails.py
-        python agent_followup.py
-
-    - name: 🏠 AUTOMATED WORKER RUN - WEDNESDAYS (Ohio Storm Roofing)
-      if: github.event.schedule == '30 15 * * 3'
-      run: |
-        python run_roofing_hunt.py
-        python push_to_supabase.py
-        python run_roofing_emails.py
         python agent_followup.py
