@@ -1,13 +1,20 @@
-name: Rainmaker 24-7 Multi-Tenant CRM Engine
+name: Rainmaker Staggered Agency Engine
 
 on:
   schedule:
-    # Triggers every day at 13:30 UTC (9:30 AM Eastern Time)
-    - cron: '30 13 * * *'
-  workflow_dispatch: # Allows manual one-click activation anytime
+    # 1. Rainmaker Core: Runs Mondays & Thursdays at 13:30 UTC (9:30 AM EST)
+    - cron: '30 13 * * 1,4'
+    
+    # 2. Televoi VoIP Hunt: Runs Tuesdays at 14:30 UTC (10:30 AM EST)
+    - cron: '30 14 * * 2'
+    
+    # 3. Ohio Storm Roofing: Runs Wednesdays at 15:30 UTC (11:30 AM EST)
+    - cron: '30 15 * * 3'
+    
+  workflow_dispatch: # Keeps manual overrides active for testing
 
 jobs:
-  run-all-campaigns:
+  run-allocated-campaign:
     runs-on: ubuntu-latest
     steps:
     - name: Check out repository code
@@ -23,13 +30,22 @@ jobs:
       run: |
         pip install beautifulsoup4 requests
 
-    - name: 🔍 STEP 1 - Run Multi-Tenant Data Hunters
+    - name: 🤖 RUN DAY 1 & 4 - Rainmaker Core Outbound
+      # Only executes on Mondays (1) and Thursdays (4) or manual clicks
+      if: github.event_name == 'workflow_dispatch' || github.event.schedule == '30 13 * * 1,4'
       run: |
         python run_rainmaker_hunt.py
-        python run_televoi_hunt.py
-        python run_roofing_hunt.py
-
-    - name: ✉️ STEP 2 - Execute Validated Outbound Mailers
-      run: |
         python agent_workflow.py
+
+    - name: 📞 RUN DAY 2 - Televoi Local VoIP Sync
+      # Only executes on Tuesdays (2)
+      if: github.event_name == 'workflow_dispatch' || github.event.schedule == '30 14 * * 2'
+      run: |
+        python run_televoi_hunt.py
+
+    - name: 🏠 RUN DAY 3 - Ohio Storm Roofing Campaign
+      # Only executes on Wednesdays (3)
+      if: github.event_name == 'workflow_dispatch' || github.event.schedule == '30 15 * * 3'
+      run: |
+        python run_roofing_hunt.py
         python run_roofing_emails.py
