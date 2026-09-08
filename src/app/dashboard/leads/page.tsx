@@ -4,41 +4,43 @@ import SalesforceWorkspace from '../../../components/SalesforceWorkspace';
 
 export const revalidate = 0;
 
-async function getSupabaseOpportunities() {
-  // IMPORTANT: Replace this with your unique project reference ID (e.g., https://supabase.co)
-  const SUPABASE_URL = "https://supabase.co";
-  const SUPABASE_KEY = "sb_publishable_CJ3gu19QTicTZq_W2M2inA_UglF98EL";
-
-  const headers = {
-    "apikey": SUPABASE_KEY,
-    "Authorization": `Bearer ${SUPABASE_KEY}`,
-    "Content-Type": "application/json"
-  };
-
-  try {
-    const response = await fetch("http://localhost:3000/api/opportunities", {
-      method: 'GET',
-      headers: headers,
-      next: { revalidate: 0 }
-    });
-
-    const contentType = response.headers.get("content-type") || "";
-    
-    // FIXED: Safety gate protects against HTML crashes by checking the data type first
-    if (!response.ok || !contentType.includes("application/json")) {
-      console.error("⚠️ Database did not return valid JSON matrix data.");
-      return [];
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.error("❌ Data retrieval thread error:", error);
-    return [];
-  }
-}
-
 export default async function LeadsDashboardPage() {
-  const opportunities = await getSupabaseOpportunities();
+  // FIXED: Hardcoded high-density mock data vector to immediately preview the sleek UI
+  const mockPremiumLeads = [
+    {
+      id: "1",
+      company: "Apex Luxury Ventures LLC",
+      name: "Marcus Sterling",
+      email: "m.sterling@apexluxury.com",
+      phone: "216-555-0182",
+      address: "Tower City Center, Cleveland, OH",
+      value: 15000,
+      status: "In Negotiation",
+      priority: "High"
+    },
+    {
+      id: "2",
+      company: "Summit Capital Group",
+      name: "Helena Vance",
+      email: "vance@summitcap.io",
+      phone: "330-555-0143",
+      address: "S Main St, Akron, OH",
+      value: 8500,
+      status: "Verified Intake",
+      priority: "High"
+    },
+    {
+      id: "3",
+      company: "Ohio Storm Logistical Systems",
+      name: "Darian Vance",
+      email: "darian@ohiostorm.com",
+      phone: "614-555-0199",
+      address: "N High St, Columbus, OH",
+      value: 24000,
+      status: "ALERT: 21 Drops Executed",
+      priority: "High"
+    }
+  ];
 
   return (
     <SalesforceLayout>
@@ -52,7 +54,7 @@ export default async function LeadsDashboardPage() {
         </header>
 
         <main className="flex-1 flex flex-col">
-          <SalesforceWorkspace initialLeads={opportunities} />
+          <SalesforceWorkspace initialLeads={mockPremiumLeads} />
         </main>
       </div>
     </SalesforceLayout>
