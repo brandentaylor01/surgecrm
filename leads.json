@@ -29,7 +29,8 @@
     "email": "partnerships@columbussolarohio.com",
     "status": "New",
     "value": 18500,
-    "assignedClientId": "client_1"
+    "assignedClientId": "client_1",
+    "roofing_contacted": true
   },
   {
     "id": "opp_1788467428302",
