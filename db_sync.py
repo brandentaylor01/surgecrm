@@ -7,7 +7,7 @@ def add_to_web_opportunities(company_name, contact_name, email, value=2500):
     payload = {
         "company": company_name,
         "name": contact_name,
-        "email": email,
+        "email": email, "phone_number": "(330) 451-2300", "address": "1200 Market Ave N, Canton, OH 44702",
         "value": value,
         "status": "In Negotiation",
         "priority": "High"
