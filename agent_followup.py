@@ -6,9 +6,6 @@ SUPABASE_URL = "https://supabase.co"
 SUPABASE_KEY = "sb_publishable_CJ3gu19QTicTZq_W2M2inA_UglF98EL"
 
 def get_rainmaker_followup_body(name, company, step, unsubscribe_link):
-    """Generates localized value-driven B2B outreach copy focused 100% on Rainmaker sales systems."""
-    
-    # 21-Step Dynamic Value-Drop Allocation Matrix
     if step <= 3:
         headline = "The pipeline conversion bottleneck"
         text = "Our internal sales data shows that close to 74% of B2B cold outreach campaigns fail because agencies demand a formal meeting block too quickly. Shifting to an interest-based, low-friction format fixes this immediately."
@@ -31,7 +28,6 @@ def get_rainmaker_followup_body(name, company, step, unsubscribe_link):
         headline = "Final assessment window"
         text = "We are wrapping up our regional enterprise outreach passes for the month. We wanted to offer one final check to see if adding an automated, high-velocity outbound engine aligns with your growth parameters."
 
-    # Premium minimal luxury layout
     return (
         f"<div style='font-family:sans-serif;font-size:13px;color:#111;line-height:1.6;max-width:550px;'><p>Hi {name},</p>"
         f"<p>Following up with a brief data metric on your industry environment — <strong>{headline}</strong>.</p>"
@@ -42,10 +38,10 @@ def get_rainmaker_followup_body(name, company, step, unsubscribe_link):
     )
 
 def run_automated_followup_cadence():
-    print("🔄 Initializing 24/7 Rainmaker Focused Follow-Up Drip Matrix Engine...")
+    print("🔄 Initializing 24/7 Smart Safeguard Follow-Up Engine...")
     headers = {"apikey": SUPABASE_KEY, "Authorization": f"Bearer {SUPABASE_KEY}", "Content-Type": "application/json"}
     
-    # Target active negotiation records who have not opted out
+    # FIXED: Only pulls active "In Negotiation" leads. If status changes, they are completely excluded from the query payload.
     url = f"{SUPABASE_URL}?unsubscribed=eq.false&status=eq.In+Negotiation"
     try:
         res = requests.get(url, headers=headers, timeout=5)
@@ -59,10 +55,12 @@ def run_automated_followup_cadence():
         company = lead.get("company", "your enterprise")
         sent_count = lead.get("sequences_sent", 1) 
         last_date_str = lead.get("last_contacted_at")
+        status = lead.get("status", "")
 
-        if not email or sent_count >= 21: continue
+        # CRITICAL SAFEGUARD: Hard stop protection gate if they booked a meeting via integrations
+        if status == "Appointment Scheduled" or not email or sent_count >= 21: 
+            continue
 
-        # ENFORCE 3-DAY DELAY BETWEEN OUTBOUND DROPS
         if last_date_str:
             try:
                 last_date = datetime.fromisoformat(last_date_str.replace('Z', '+00:00'))
@@ -82,10 +80,9 @@ def run_automated_followup_cadence():
                 "sequences_sent": next_step,
                 "last_contacted_at": datetime.now().isoformat()
             }
-            # LOCK OUT GATES AT STEP 21: Change status badge indicator to alert state immediately
             if next_step == 21:
                 update_payload["status"] = "ALERT: 21 Drops Executed"
-                print(f"🚨 ALARM: Rainmaker outreach maximum sequence threshold hit for {email}!")
+                print(f"🚨 ALARM: Rainmaker sequence maxed for {email}!")
 
             requests.patch(f"{SUPABASE_URL}?email=eq.{requests.utils.quote(email)}", headers=headers, json=update_payload, timeout=5)
             time.sleep(random.randint(60, 180))
