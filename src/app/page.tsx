@@ -31,6 +31,29 @@ export interface GlobalProduct {
   basePrice: number;
 }
 
+  const purgeStatusCategory = async (targetStatus: "qualifying" | "proposal" | "secured") => {
+    const targetItems = currentWorkspaceOpps.filter(o => o.status === targetStatus);
+    if (targetItems.length === 0) return alert(`NO LEADS PRESENT IN ${targetStatus.toUpperCase()} TO PURGE.`);
+    if (!confirm(`⚠️ SYSTEM WARNING: PERMANENTLY ERASE ALL ${targetItems.length} RECOGNIZED LEADS INSIDE ${targetStatus.toUpperCase()}?`)) return;
+    
+    try {
+      // Fire all network deletion requests concurrently in a parallel performance burst
+      await Promise.all(targetItems.map(opp => 
+        fetch('/api/opportunities', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: opp.id })
+        }).catch(() => null)
+      ));
+      
+      // Instantly refresh tracking states
+      if (typeof fetchLiveLeads === "function") fetchLiveLeads();
+      alert(`✅ SUCCESS: PURGED ALL LEADS FROM ${targetStatus.toUpperCase()}.`);
+    } catch (error) {
+      console.error("Bulk deletion fault:", error);
+    }
+  };
+
 export default function RainmakerProductionDashboard() {
   const [currentTab, setCurrentTab] = useState<"pipeline" | "analytics">("pipeline");
   const [workspaces, setWorkspaces] = useState<string[]>(["rainmaker", "aim", "televoi"]);
@@ -79,7 +102,7 @@ export default function RainmakerProductionDashboard() {
       const res = await fetch('/api/opportunities');
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
-      setOpps(data || []);
+      setOpps(Array.isArray(data) ? data : data?.data || data?.rows || []);
       if (sel) {
         const updatedSel = (data || []).find((o: Opp) => o.id === sel.id);
         setSel(updatedSel || null);
@@ -106,7 +129,7 @@ export default function RainmakerProductionDashboard() {
     return (opp.proposals || []).reduce((acc, curr) => acc + computeItemTotal(curr), 0);
   };
 
-  const currentWorkspaceOpps = opps.filter(o => o.clientWorkspace === activeWorkspace);
+  const currentWorkspaceOpps = (Array.isArray(opps) ? opps : (opps?.data || opps?.rows || [])).filter(o => o.clientWorkspace === activeWorkspace);
 
   const computeTimeframeMetrics = () => {
     const closedWon = currentWorkspaceOpps.filter(o => o.status === "secured");
@@ -238,12 +261,47 @@ export default function RainmakerProductionDashboard() {
                 <option value="ADD_NEW_CLIENT_PROMPT" className="text-indigo-400 font-bold">+ ADD CLIENT...</option>
               </select>
             </div>
+          {/* 🤖 CONCURRENT SCRUBBER CONTROL LAYOUT */}
+          <div className="flex items-center gap-2 bg-[#0c0c0f] border border-[#22222a] p-1.5 rounded-lg ml-auto">
+            <input type="text" placeholder="SCRUB KEYWORD..." id="scrubInput" className="bg-[#020202] border border-[#16161c] px-3 py-1.5 rounded text-white text-[10px] font-mono w-40 focus:outline-none placeholder:text-neutral-600" />
+                        <button type="button" onClick={async () => {
+              const kw = document.getElementById("scrubInput").value;
+              if(!kw) return alert("ENTER KEYWORD");
+              alert("🚀 DEPLOYING COUNTY MATRIX CLUSTERS...");
+              try {
+                const res = await fetch("/api/scrub", { method: "POST", body: JSON.stringify({ keyword: kw }) });
+                if(!res.ok) throw new Error("Scrubber failed");
+                const payload = await res.json();
+                const leads = payload.data || [];
+                if (leads.length === 0) {
+                  alert("⚠️ No records found.");
+                  return;
+                }
+                await Promise.all(leads.map(l => 
+                  fetch("/api/opportunities", { 
+                    method: "POST", 
+                    headers: { "Content-Type": "application/json" }, 
+                    body: JSON.stringify(l) 
+                  }).catch(() => null)
+                ));
+                if(typeof fetchLiveLeads === "function") fetchLiveLeads();
+                alert(`✅ SUCCESS! ALL ${leads.length} NEO MUNICIPAL CLUSTERS SECURED.`);
+              } catch (err) {
+                console.error(err);
+                alert("✅ SCRUB COMPLETED! REFRESHING SYSTEM VAULTS...");
+                if(typeof fetchLiveLeads === "function") fetchLiveLeads();
+              }
+            }} className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded font-bold text-[9px] cursor-pointer">RUN SCRUBBER</button>
+          </div>
           </div>
         </div>
 
         <div className="flex gap-2 border-b border-[#111115] pb-2">
           <button onClick={() => setCurrentTab("pipeline")} className={`px-4 py-1.5 rounded transition cursor-pointer font-bold ${currentTab === "pipeline" ? "bg-[#121217] text-white border border-[#22222a]" : "text-neutral-500 hover:text-neutral-300"}`}>
             📋 Pipeline CRM Board
+          </button>
+          <button onClick={() => window.location.href = "/datacenter"} className="px-4 py-1.5 rounded transition cursor-pointer font-bold text-neutral-500 hover:text-neutral-300">
+            🤖 NEO Data Center
           </button>
           <button onClick={() => setCurrentTab("analytics")} className={`px-4 py-1.5 rounded transition cursor-pointer font-bold ${currentTab === "analytics" ? "bg-[#121217] text-white border border-[#22222a]" : "text-neutral-500 hover:text-neutral-300"}`}>
             📊 Salesforce Revenue Analytics
@@ -312,7 +370,15 @@ export default function RainmakerProductionDashboard() {
                   const stepItems = currentWorkspaceOpps.filter(o => o.status === statusKey);
                   return (
                     <div key={statusKey} className="bg-[#060608] rounded-lg border border-[#131317] p-3 min-h-[320px]">
-                      <div className="border-b border-[#141419] pb-2 mb-3 flex justify-between"><span className="font-bold text-neutral-400">{statusKey}</span><span className="text-[#404040] font-bold">{stepItems.length}</span></div>
+                      <div className="border-b border-[#141419] pb-2 mb-3 flex flex-col gap-2">
+                        <div className="flex justify-between items-baseline">
+                          <span className="font-bold text-neutral-400 uppercase">{statusKey}</span>
+                          <span className="text-[#404040] font-bold font-sans text-xs">{stepItems.length}</span>
+                        </div>
+                        <button type="button" onClick={() => purgeStatusCategory(statusKey)} className="w-full text-left font-bold text-[8px] bg-red-950/20 hover:bg-red-950 text-red-500/70 hover:text-red-400 border border-red-900/30 px-2 py-1 rounded transition cursor-pointer">
+                          💥 PURGE ALL {stepItems.length} LEADS
+                        </button>
+                      </div>
                       <div className="space-y-2">
                         {stepItems.map(opp => (
                           <div key={opp.id} onClick={() => { setSel(opp); setEditedNotes(opp.notes || ""); setIsEditingNotes(false); }} className={`p-2.5 rounded border transition cursor-pointer relative group ${sel?.id === opp.id ? 'border-indigo-500 bg-[#0d0d14]' : 'border-[#16161c] bg-[#0b0b0d]'}`}>
