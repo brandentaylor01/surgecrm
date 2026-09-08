@@ -39,7 +39,7 @@ def run_roofing_campaign():
             f"Would you be open to a quick on-site diagnostic walkthrough for your "
             f"buildings later this week? Zero obligation, we just provide the data.\n\n"
             f"Best regards,\n\n"
-            f"Branden Miller\n"
+            f"Branden Taylor\n"
             f"Hirerainmakers"
         )
         
