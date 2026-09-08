@@ -9,10 +9,6 @@ from db_sync import add_to_web_opportunities
 LEADS_FILE = "leads.json"
 DAILY_MAX_CAP = 45 
 
-def is_business_hours():
-    # Force open for live inspection testing
-    return True
-
 def load_leads():
     if not os.path.exists(LEADS_FILE):
         return []
@@ -24,14 +20,8 @@ def load_leads():
 
 def run_humanized_outreach():
     print("🤖 AI Agent initiating human-simulated outreach campaign...")
-    
-    if not is_business_hours():
-        print("🛑 Outside of human business hours. Pausing engine.")
-        return
-        
     leads = load_leads()
     if not leads:
-        print("No prospects found to email.")
         return
 
     sent_today = 0
@@ -49,19 +39,18 @@ def run_humanized_outreach():
             
         print(f"\n✉️ Sending outreach to {email}...")
         
-        subject = "Fixing your pipeline bottlenecks"
+        subject = "quick question about your outbound pipeline"
         body = (
             f"Hi {name},\n\n"
-            f"Building an elite internal sales engine is incredibly painful right now. "
-            f"Between struggling to find premium candidates who can actually close, "
-            f"and waiting on slow client payments, it stalls your kinetic growth.\n\n"
-            f"At Hirerainmakers, we install a complete outbound pipeline engine "
-            f"and high-ticket closing system for a flat $2,500/month—significantly "
-            f"less than the overhead of a single full-time hire.\n\n"
-            f"We bring the pipeline, handle the conversion velocity, and secure the revenue.\n\n"
-            f"Do you have 5 minutes this Thursday for a brief walkthrough?\n\n"
+            f"Most growth agencies promise you the world, send a massive "
+            f"list of generic leads, and vanish. It's a headache to deal with.\n\n"
+            f"We're a team of actual sales professionals, and we handle things "
+            f"differently. We do the heavy lifting for you—building real outbound "
+            f"pipelines and actually closing the revenue. You get the benefits "
+            f"of an active sales operation without the overhead.\n\n"
+            f"Worth a quick 5-minute chat this Thursday to see how we do it?\n\n"
             f"Best,\n\n"
-            f"Branden Miller\n"
+            f"Branden Taylor\n"
             f"Hirerainmakers"
         )
         
@@ -71,15 +60,13 @@ def run_humanized_outreach():
             sent_today += 1
             lead["contacted"] = True
             lead["date_contacted"] = datetime.now().strftime("%Y-%m-%d")
-            
             with open(LEADS_FILE, "w") as f:
                 json.dump(leads, f, indent=2)
                 
-            # Pipes opportunity instantly to your live dashboard grid
-            add_to_web_opportunities(company, name, email, value=2500)
+            add_to_web_opportunities(company, name, email)
                 
             sleep_duration = random.randint(120, 300)
-            print(f"⏳ Mimicking human delay. Sleeping for {sleep_duration}s...")
+            print(f"⏳ Sleeping for {sleep_duration} seconds...")
             time.sleep(sleep_duration)
 
 if __name__ == "__main__":
