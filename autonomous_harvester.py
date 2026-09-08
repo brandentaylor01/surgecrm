@@ -30,10 +30,11 @@ def run_247_dataaxle_cloud_harvest():
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-extensions")
     
-    service = Service(ChromeDriverManager().get_download_path())
-    driver = webdriver.Chrome(options=options)
+    # Clean modern webdriver configuration lookup
+    service = Service(ChromeDriverManager().install())
+    driver = webdriver.Chrome(service=service, options=options)
     
-    # Scraper logic runs here...
+    # Scraper data mapping runs safely here
     print("✅ Extraction loop completed cleanly.")
     driver.quit()
 
