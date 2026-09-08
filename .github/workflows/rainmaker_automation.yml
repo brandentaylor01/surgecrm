@@ -2,16 +2,20 @@ name: Rainmaker Staggered Agency Engine
 
 on:
   schedule:
-    # 1. Rainmaker Core: Runs Mondays & Thursdays at 13:30 UTC (9:30 AM EST)
-    - cron: '30 13 * * 1,4'
-    
-    # 2. Televoi VoIP Hunt: Runs Tuesdays at 14:30 UTC (10:30 AM EST)
-    - cron: '30 14 * * 2'
-    
-    # 3. Ohio Storm Roofing: Runs Wednesdays at 15:30 UTC (11:30 AM EST)
-    - cron: '30 15 * * 3'
-    
-  workflow_dispatch: # Keeps manual overrides active for testing
+    - cron: '30 13 * * 1,4' # Mon, Thu 9:30 AM EST
+    - cron: '30 14 * * 2'   # Tue 10:30 AM EST
+    - cron: '30 15 * * 3'   # Wed 11:30 AM EST
+  workflow_dispatch:
+    inputs:
+      target_campaign:
+        description: 'Select manual campaign bypass handle'
+        required: true
+        default: 'rainmaker'
+        type: choice
+        options:
+          - rainmaker
+          - televoi
+          - roofing
 
 jobs:
   run-allocated-campaign:
@@ -24,28 +28,37 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.9'
-        cache: 'pip'
 
-    - name: Install Cloud Requirements
+    - name: Install Cloud Browser & Libraries
       run: |
-        pip install beautifulsoup4 requests
+        sudo apt-get update
+        sudo apt-get install -y google-chrome-stable
+        pip install beautifulsoup4 requests selenium==4.20.0 urllib3<2.0
 
     - name: 🤖 RUN DAY 1 & 4 - Rainmaker Core Outbound
-      # Only executes on Mondays (1) and Thursdays (4) or manual clicks
-      if: github.event_name == 'workflow_dispatch' || github.event.schedule == '30 13 * * 1,4'
+      if: |
+        github.event.schedule == '30 13 * * 1,4' ||
+        (github.event_name == 'workflow_dispatch' && inputs.target_campaign == 'rainmaker')
       run: |
         python run_rainmaker_hunt.py
+        # FIXED: Automatically push scraper output to Supabase without manual file loads
+        python push_to_supabase.py
         python agent_workflow.py
 
     - name: 📞 RUN DAY 2 - Televoi Local VoIP Sync
-      # Only executes on Tuesdays (2)
-      if: github.event_name == 'workflow_dispatch' || github.event.schedule == '30 14 * * 2'
+      if: |
+        github.event.schedule == '30 14 * * 2' ||
+        (github.event_name == 'workflow_dispatch' && inputs.target_campaign == 'televoi')
       run: |
         python run_televoi_hunt.py
+        python push_to_supabase.py
         python run_televoi_emails.py
+
     - name: 🏠 RUN DAY 3 - Ohio Storm Roofing Campaign
-      # Only executes on Wednesdays (3)
-      if: github.event_name == 'workflow_dispatch' || github.event.schedule == '30 15 * * 3'
+      if: |
+        github.event.schedule == '30 15 * * 3' ||
+        (github.event_name == 'workflow_dispatch' && inputs.target_campaign == 'roofing')
       run: |
         python run_roofing_hunt.py
+        python push_to_supabase.py
         python run_roofing_emails.py
