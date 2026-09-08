@@ -1,99 +1,70 @@
-import json
-import os
-import time
-import random
+import requests
 from datetime import datetime, timedelta
 from spacemail_sender import send_spacemail
 
-LEADS_FILE = "leads.json"
-DAILY_FOLLOWUP_CAP = 25  # Lower cap for follow-ups to maintain safety balances
+SUPABASE_URL = "https://supabase.co"
+SUPABASE_KEY = "sb_publishable_CJ3gu19QTicTZq_W2M2inA_UglF98EL"
 
-def load_leads():
-    if not os.path.exists(LEADS_FILE):
-        return []
+def run_automated_followup_cadence():
+    headers = {
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_KEY}",
+        "Content-Type": "application/json"
+    }
+    
+    # Target only active pipeline entries who have NOT unsubscribed
+    url = f"{SUPABASE_URL}?unsubscribed=eq.false&status=eq.In+Negotiation"
+    
     try:
-        with open(LEADS_FILE, "r") as f:
-            return json.load(f)
-    except Exception:
-        return []
-
-def run_followup_sequence():
-    print("🤖 AI Follow-Up Agent scanning for pending pipeline touchpoints...")
-    leads = load_leads()
-    if not leads:
-        print("No leads discovered to process.")
-        return
-
-    sent_today = 0
-    today = datetime.now()
+        res = requests.get(url, headers=headers, timeout=5)
+        if res.status_code != 200: return
+        leads = res.json()
+    except Exception: return
 
     for lead in leads:
-        if sent_today >= DAILY_FOLLOWUP_CAP:
-            print(f"🛑 Reached safe daily follow-up cap of {DAILY_FOLLOWUP_CAP}.")
-            break
-
         email = lead.get("email")
         name = lead.get("name", "Founder")
         company = lead.get("company", "your enterprise")
+        sent_count = lead.get("sequences_sent", 0)
+        last_date_str = lead.get("last_contacted_at")
+
+        # CRITICAL SAFEGUARD GATES: Drop execution if thresholds are breached
+        if not email or sent_count >= 21:
+            continue
+
+        # 3-DAY TIMELINE EVALUATION: Verify if it's time to follow up
+        if last_date_str:
+            # Parse ISO layout structure components safely
+            last_date = datetime.fromisoformat(last_date_str.replace('Z', '+00:00'))
+            if datetime.now(last_date.tzinfo) < last_date + timedelta(days=3):
+                continue # Skip if 3 days haven't passed yet
+
+        # BUILD DEPLOYMENT DATA LAYOUTS
+        unsubscribe_link = f"https://vercel.app{requests.utils.quote(email)}&action=unsubscribe"
         
-        # Check if they were emailed but haven't received follow-up #1 yet
-        was_contacted = lead.get("contacted") is True
-        already_followed_up = lead.get("followup_1_sent") is True
-        is_replied_or_closed = lead.get("status") in ["Replied", "Closed", "Warm"]
-
-        if not was_contacted or already_followed_up or is_replied_or_closed:
-            continue
-
-        # Parse the initial contact date safely
-        date_str = lead.get("date_contacted")
-        if not date_str:
-            continue
-
-        try:
-            contact_date = datetime.strptime(date_str, "%Y-%m-%d")
-        except ValueError:
-            continue
-
-        # Replicate top models: Only follow up if at least 3 days have passed
-        if today - contact_date < timedelta(days=3):
-            continue
-
-        print(f"\n✉️ Sending personalized Step-2 follow-up to {email}...")
-
-        subject = "Quick bump / pipeline fix"
+        subject = "following up on your sales pipeline"
         body = (
-            f"Hi {name},\n\n"
-            f"I know your inbox is likely flooded, so I wanted to keep this brief.\n\n"
-            f"Since we last spoke, another agency owner reached out about their "
-            f"hiring bottlenecks costing them close to $8k/month in lost opportunities.\n\n"
-            f"If you're still looking to scale your outbound revenue engine to a "
-            f"predictable pace without internal hiring overhead, let me know if "
-            f"Thursday still works.\n\n"
-            f"Worth a quick 5-minute look?\n\n"
-            f"Best,\n\n"
-            f"Branden Miller\n"
-            f"Hirerainmakers"
+            f"<p>Hi {name},</p>"
+            f"<p>Just checking in on this. I know you're busy running {company}, "
+            f"but building an optimized outbound pipeline is the fastest way to scale your revenue.</p>"
+            f"<p>Do you have 5 minutes to chat this week?</p>"
+            f"<br><br><a href='{unsubscribe_link}' style='color:#555;font-size:10px;'>Unsubscribe</a>"
         )
 
-        success = send_spacemail(email, subject, body)
+        if send_spacemail(email, subject, body, is_html=True):
+            new_count = sent_count + 1
+            
+            # CRITICAL ALERT CONDITION MET: Signal alert state at 21 sent messages
+            update_payload = {
+                "sequences_sent": new_count,
+                "last_contacted_at": datetime.now().isoformat()
+            }
+            if new_count == 21:
+                update_payload["status"] = "ALERT: 21 Drops Executed"
+                print(f"🚨 ALERT STATE REACHED: 21 outbound emails dispatched to {email}!")
 
-        if success:
-            sent_today += 1
-            lead["followup_1_sent"] = True
-            lead["date_followup_1"] = today.strftime("%Y-%m-%d")
-
-            # Update database status immediately
-            with open(LEADS_FILE, "w") as f:
-                json.dump(leads, f, indent=2)
-
-            # Human-paced pacing mechanism
-            sleep_duration = random.randint(120, 300)
-            print(f"⏳ Humanized delay: sleeping for {sleep_duration} seconds...")
-            time.sleep(sleep_duration)
-        else:
-            print(f"❌ Could not deliver follow-up to {email}")
-
-    print(f"\n✅ Follow-up session complete. Processed {sent_today} records safely.")
+            # Push row synchronization matrices directly back to Supabase tables
+            requests.patch(f"{SUPABASE_URL}?email=eq.{requests.utils.quote(email)}", headers=headers, json=update_payload, timeout=5)
 
 if __name__ == "__main__":
-    run_followup_sequence()
+    run_automated_followup_cadence()

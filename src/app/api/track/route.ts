@@ -1,41 +1,47 @@
 import { NextResponse } from 'next/server';
 
+const SUPABASE_URL = "https://supabase.co";
+const SUPABASE_KEY = "sb_publishable_CJ3gu19QTicTZq_W2M2inA_UglF98EL";
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const leadId = searchParams.get('id') || 'Unknown ID';
-  const clientName = searchParams.get('client') || 'General';
+  const email = searchParams.get('email');
+  const action = searchParams.get('action');
 
-  console.log(`🔔 Open Track Triggered for Lead: ${leadId}`);
+  if (!email) return NextResponse.json({ error: 'Missing target email parameters' }, { status: 400 });
 
-  // Trigger a silent cloud alert directly to your inbox using web standards
-  try {
-    await fetch('https://resend.com', {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer re_your_free_key',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        from: 'alerts@hirerainmakers.com',
-        to: 'branden@hirerainmakers.com',
-        subject: `🔥 EMAIL OPENED: ${clientName} Campaign`,
-        html: `<p>Good news! Lead ID <strong>${leadId}</strong> just opened your outbound email.</p>`
-      })
-    });
-  } catch (err) {
-    console.log('Notification relay skipped.');
+  const headers = {
+    "apikey": SUPABASE_KEY,
+    "Authorization": `Bearer ${SUPABASE_KEY}`,
+    "Content-Type": "application/json"
+  };
+
+  // IF THE USER CLICKED UNSUBSCRIBE: Lock them out of future campaign distributions
+  if (action === 'unsubscribe') {
+    try {
+      await fetch(`${SUPABASE_URL}?email=eq.${encodeURIComponent(email)}`, {
+        method: 'PATCH',
+        headers: headers,
+        body: JSON.stringify({ unsubscribed: true, status: 'Bypassed / Unsubscribed' })
+      });
+      return new NextResponse('<h1>You have been successfully removed from our outreach ledger.</h1>', {
+        headers: { 'Content-Type': 'text/html' }
+      });
+    } catch (err) {
+      return NextResponse.json({ error: 'Database update exception' }, { status: 500 });
+    }
   }
 
-  // Return 1x1 transparent tracking pixel GIF buffer safely
-  const pixel = Buffer.from(
-    'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
-    'base64'
-  );
+  // OTHERWISE, IT IS A PIXEL OPEN: Track interaction safely
+  try {
+    await fetch(`${SUPABASE_URL}?email=eq.${encodeURIComponent(email)}`, {
+      method: 'PATCH',
+      headers: headers,
+      body: JSON.stringify({ status: 'Opened / Reviewing Pitch' })
+    });
+  } catch (err) {}
 
-  return new NextResponse(pixel, {
-    headers: {
-      'Content-Type': 'image/gif',
-      'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
-    },
-  });
+  // Return invisible 1x1 base64 tracking pixel buffer back to email application
+  const pixel = Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64');
+  return new NextResponse(pixel, { headers: { 'Content-Type': 'image/gif' } });
 }
