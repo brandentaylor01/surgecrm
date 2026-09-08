@@ -2,10 +2,10 @@ name: Rainmaker 24/7 Autonomous Core
 
 on:
   schedule:
-    - cron: '*/15 * * * *' # Fallback trigger to wake up every 15 minutes
+    - cron: '*/15 * * * *'  # Backup trigger to wake up the worker loop if it drops
   workflow_dispatch:
   repository_dispatch:
-    types: [loop_trigger] # Custom event to catch autonomous self-calls
+    types: [loop_trigger] # Intercepts autonomous continuous self-calls
 
 jobs:
   autonomous-agency-loop:
@@ -23,7 +23,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y google-chrome-stable
-        pip install beautifulsoup4 requests selenium==4.20.0 urllib3<2.0
+        pip install beautifulsoup4 requests selenium==4.20.0 'urllib3<2.0'
 
     - name: 🤖 RUN AUTONOMOUS HARVESTER PIPELINE
       run: |
@@ -32,8 +32,8 @@ jobs:
         python run_rainmaker_emails.py
         python agent_followup.py
 
-    - name: 🔄 Trigger Next Continuous Loop Sequence
-      if: always() # Ensures the loop restarts even if a step encounters a lead error
+    - name: 🔄 Re-Trigger Next Continuous Loop Sequence
+      if: always() # Guarantees the continuous cycle triggers even if a step encounters a lead error
       run: |
         curl -X POST \
           -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
