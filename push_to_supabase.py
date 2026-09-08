@@ -3,8 +3,7 @@ import os
 import requests
 
 CSV_FILE = "leads.csv"
-# IMPORTANT: Replace the 'xyz' token section below with your true unique Supabase Project ID layout reference string
-SUPABASE_URL = "https://supabase.co"
+SUPABASE_URL = "https://vercel.app"
 SUPABASE_KEY = "sb_publishable_CJ3gu19QTicTZq_W2M2inA_UglF98EL"
 
 def push_csv_to_supabase():
@@ -15,13 +14,11 @@ def push_csv_to_supabase():
     headers = {
         "apikey": SUPABASE_KEY,
         "Authorization": f"Bearer {SUPABASE_KEY}",
-        "Content-Type": "application/json",
-        "Prefer": "return=minimal"
+        "Content-Type": "application/json"
     }
 
     print("🚀 Initiating cloud database sync from library export...")
     success_count = 0
-    
     session = requests.Session()
     session.headers.update(headers)
 
