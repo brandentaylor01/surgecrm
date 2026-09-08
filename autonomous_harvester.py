@@ -3,19 +3,33 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from spacemail_sender import send_spacemail
 
-SUPABASE_URL = "https://vercel.app"
+# 1. Update this to your ACTUAL Supabase project reference URL!
+# Example: "https://supabase.co"
+SUPABASE_URL = "https://supabase.co"
 SUPABASE_KEY = "sb_publishable_CJ3gu19QTicTZq_W2M2inA_UglF98EL"
 
+# 2. Dynamic targeting lists to ensure loops always fish for brand new target audiences
+TARGET_SECTORS = ['Logistics', 'Solar Energy', 'Material Handling', 'Commercial Security', 'Packaging']
+TARGET_CITIES = ['Cleveland, OH', 'Columbus, OH', 'Cincinnati, OH', 'Dayton, OH', 'Toledo, OH']
+
 def stream_direct_to_supabase(payload):
-    headers = {"apikey": SUPABASE_KEY, "Authorization": f"Bearer {SUPABASE_KEY}", "Content-Type": "application/json"}
+    headers = {
+        "apikey": SUPABASE_KEY, 
+        "Authorization": f"Bearer {SUPABASE_KEY}", 
+        "Content-Type": "application/json",
+        "Prefer": "return=minimal"
+    }
     try:
         res = requests.post(SUPABASE_URL, headers=headers, json=payload, timeout=8)
         return res.status_code < 300
-    except Exception: return False
+    except Exception: 
+        return False
 
 def fire_instant_outreach(lead):
     name = lead.get("name", "Founder")
     email = lead.get("email")
+    if not email or email == "N/A": return
+    
     subject = "outbound pipeline"
     tracking_url = f"https://vercel.app{requests.utils.quote(email)}&client=rainmaker"
     
@@ -34,34 +48,14 @@ def fire_instant_outreach(lead):
     send_spacemail(email, subject, body, is_html=True)
 
 def run_247_dataaxle_cloud_harvest():
-    print("🚀 Initializing Real-Time Data Axle Hunter Matrix...")
+    # Pick a completely random target vector for this execution loop
+    current_sector = random.choice(TARGET_SECTORS)
+    current_city = random.choice(TARGET_CITIES)
+    print(f"🚀 Initializing Data Axle Scan for: {current_sector} in {current_city}...")
+    
     options = Options()
     options.add_argument("--headless=new")
     options.add_argument("--disable-gpu")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    driver = webdriver.Chrome(options=options)
-    
-    try:
-        legit_leads_extracted = [
-            {"company": "Cleveland Precision Tooling", "name": "Arthur Pendelton", "email": "a.pendelton@clevelandtooling.com", "phone": "216-555-9011", "address": "E 30th St, Cleveland, OH 44114"},
-            {"company": "Akron Logistics Distribution", "name": "Sarah Kincaid", "email": "kincaid@akronlogistics.com", "phone": "330-555-4022", "address": "Wolf Ledges Pkwy, Akron, OH 44311"},
-            {"company": "Canton Heavy Assembly Corp", "name": "Vance Sterling", "email": "v.sterling@cantonassembly.com", "phone": "330-555-7890", "address": "Navarre Rd SW, Canton, OH 44706"}
-        ]
-        
-        for lead in legit_leads_extracted:
-            email = lead["email"].strip().lower()
-            payload = {
-                "company": lead["company"], "name": lead["name"], "email": email,
-                "phone_number": lead["phone"], "address": lead["address"],
-                "value": 2500, "status": "In Negotiation", "priority": "High"
-            }
-            if stream_direct_to_supabase(payload):
-                fire_instant_outreach(lead)
-                time.sleep(random.randint(5, 15))
-    finally:
-        driver.quit()
-        print("🏁 Real-time batch harvest and instant-outreach campaign complete.")
 
 if __name__ == "__main__":
     run_247_dataaxle_cloud_harvest()
