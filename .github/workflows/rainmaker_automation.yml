@@ -1,60 +1,60 @@
-name: Rainmaker 24/7 Cloud Worker
+name: Rainmaker 24/7 Autonomous Core
 
 on:
   schedule:
+    # Triggers automatically across standard staggered business day intervals
     - cron: '30 13 * * 1,4' # Mondays & Thursdays 9:30 AM EST
     - cron: '30 14 * * 2'   # Tuesdays 10:30 AM EST
     - cron: '30 15 * * 3'   # Wednesdays 11:30 AM EST
-  workflow_dispatch:
-    inputs:
-      target_campaign:
-        description: 'Bypass handle for manual execution'
-        required: true
-        default: 'rainmaker'
-        type: choice
-        options: [rainmaker, televoi, roofing]
+  workflow_dispatch: # Allows optional 1-click testing overrides in GitHub UI
 
 jobs:
-  autonomous-execution:
+  autonomous-agency-loop:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout Code
+    - name: Checkout Code Repository
       uses: actions/checkout@v4
 
-    - name: Initialize Environment
+    - name: Initialize Environment Runtimes
       uses: actions/setup-python@v5
       with:
         python-version: '3.9'
 
-    - name: Provision Scraping Assets
+    - name: Provision Headless Scraping Infrastructure
       run: |
         sudo apt-get update
         sudo apt-get install -y google-chrome-stable
         pip install beautifulsoup4 requests selenium==4.20.0 urllib3<2.0
 
-    - name: Run Rainmaker Vector Pass
+    - name: 🤖 AUTOMATED WORKER RUN - MONDAYS & THURSDAYS (Rainmaker Core)
       if: |
         github.event.schedule == '30 13 * * 1,4' ||
-        (github.event_name == 'workflow_dispatch' && inputs.target_campaign == 'rainmaker')
+        github.event_name == 'workflow_dispatch'
       run: |
+        echo "Executing Phase 1: Mining and Scrapes..."
         python run_rainmaker_hunt.py
+        
+        echo "Executing Phase 2: Staging data to Supabase Database..."
         python push_to_supabase.py
-        python agent_workflow.py
+        
+        echo "Executing Phase 3: Commencing First-Touch Outbound Messaging..."
+        python run_rainmaker_emails.py
+        
+        echo "Executing Phase 4: Running 3-Day Follow-Up Cadences & Unsubscribe Filters..."
+        python agent_followup.py
 
-    - name: Run Televoi Vector Pass
-      if: |
-        github.event.schedule == '30 14 * * 2' ||
-        (github.event_name == 'workflow_dispatch' && inputs.target_campaign == 'televoi')
+    - name: 📞 AUTOMATED WORKER RUN - TUESDAYS (Televoi VoIP Loop)
+      if: github.event.schedule == '30 14 * * 2'
       run: |
         python run_televoi_hunt.py
         python push_to_supabase.py
         python run_televoi_emails.py
+        python agent_followup.py
 
-    - name: Run Roofing Vector Pass
-      if: |
-        github.event.schedule == '30 15 * * 3' ||
-        (github.event_name == 'workflow_dispatch' && inputs.target_campaign == 'roofing')
+    - name: 🏠 AUTOMATED WORKER RUN - WEDNESDAYS (Ohio Storm Roofing)
+      if: github.event.schedule == '30 15 * * 3'
       run: |
         python run_roofing_hunt.py
         python push_to_supabase.py
         python run_roofing_emails.py
+        python agent_followup.py
