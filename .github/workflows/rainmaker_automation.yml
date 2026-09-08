@@ -1,0 +1,32 @@
+name: Rainmaker 24-7 CRM Engine
+
+on:
+  schedule:
+    # Triggers every single day at exactly 13:30 UTC (9:30 AM Eastern Time)
+    - cron: '30 13 * * *'
+  workflow_dispatch: # Allows you to manually trigger it from GitHub anytime
+
+jobs:
+  run-outreach:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out repo code
+      uses: actions/checkout@v4
+
+    - name: Set up Cloud Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.9'
+        cache: 'pip'
+
+    - name: Install Scraper Requirements
+      run: |
+        pip install beautifulsoup4 requests
+
+    - name: Run Premium Target Hunt
+      run: |
+        python run_rainmaker_hunt.py
+
+    - name: Run Safe Outreach Sequence
+      run: |
+        python agent_workflow.py

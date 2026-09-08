@@ -1,11 +1,30 @@
 import json
 import os
 import re
-import time
 import requests
 from bs4 import BeautifulSoup
 
 LEADS_FILE = "leads.json"
+
+def is_legit_business_email(email):
+    # Rule 1: Filter out generic, non-decision maker mailboxes
+    junk_roles = [
+        "info@", "support@", "admin@", "sales@", "jobs@", 
+        "careers@", "contact@", "help@", "billing@", "office@"
+    ]
+    email_lower = email.lower()
+    
+    if any(role in email_lower for role in junk_roles):
+        print(f"⏩ Dropping generic role-based address: {email}")
+        return False
+        
+    # Rule 2: Ensure it belongs to a real corporate domain (No free public webmails)
+    public_providers = ["@gmail.com", "@yahoo.com", "@hotmail.com", "@outlook.com"]
+    if any(provider in email_lower for provider in public_providers):
+        print(f"⏩ Dropping non-corporate address: {email}")
+        return False
+        
+    return True
 
 def append_to_leads(new_leads):
     if os.path.exists(LEADS_FILE):
@@ -31,10 +50,10 @@ def append_to_leads(new_leads):
             
     with open(LEADS_FILE, "w") as f:
         json.dump(current_leads, f, indent=2)
-    print(f"📁 Saved {added_count} brand new prospects.")
+    print(f"📁 Verified and saved {added_count} premium prospects.")
 
 def search_and_scrape_prospects(query_topic):
-    print(f"🔍 Searching for: '{query_topic}'...")
+    print(f"🔍 Searching for premium targets: '{query_topic}'...")
     headers = {"User-Agent": "Mozilla/5.0"}
     search_url = f"https://duckduckgo.com{query_topic}+contact+email"
     
@@ -49,18 +68,21 @@ def search_and_scrape_prospects(query_topic):
             
             if email_match:
                 extracted_email = email_match.group(0)
-                found_prospects.append({
-                    "name": "Prospect Name",
-                    "company": "Discovered Enterprise",
-                    "email": extracted_email,
-                    "status": "Cold Intake",
-                    "priority": "Medium",
-                    "conversion": 50,
-                    "health": "Excellent"
-                })
+                
+                # Run the validation layer check
+                if is_legit_business_email(extracted_email):
+                    found_prospects.append({
+                        "name": "Decision Maker",
+                        "company": "Target B2B Enterprise",
+                        "email": extracted_email,
+                        "status": "Verified Intake",
+                        "priority": "High",
+                        "conversion": 65,
+                        "health": "Excellent"
+                    })
         if found_prospects:
             append_to_leads(found_prospects)
         else:
-            print("No public signatures found in this pass.")
+            print("No new premium email signatures found in this pass.")
     except Exception as e:
-        print(f"⚠️ Scraping pass stopped: {e}")
+        print(f"⚠️ Verification filter pass stopped: {e}")
