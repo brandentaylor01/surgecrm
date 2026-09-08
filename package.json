@@ -10,6 +10,9 @@
     "seed-leads": "node -e \"fetch('https://vercel.app', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ company: 'Cleveland Logistics', city: 'Cleveland', niche: '3PL Logistics', email: 'ops@clevelandspeedy3pl.com' }) }).then(r => r.json()).then(console.log)\""
   },
   "dependencies": {
+    "@supabase/server": "^1.5.3",
+    "@supabase/supabase-js": "^2.116.0",
+    "@vercel/postgres": "^0.10.0",
     "axios": "^1.20.0",
     "cheerio": "^1.2.0",
     "clsx": "^2.1.1",
