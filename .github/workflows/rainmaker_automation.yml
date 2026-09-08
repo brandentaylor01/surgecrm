@@ -7,6 +7,11 @@ on:
   repository_dispatch:
     types: [loop_trigger]
 
+# 🚀 CRITICAL FIX: Unlock API capabilities for your runner token
+permissions:
+  contents: write
+  actions: write
+
 jobs:
   autonomous-agency-loop:
     runs-on: ubuntu-latest
