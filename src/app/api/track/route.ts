@@ -7,9 +7,8 @@ export async function GET(request: Request) {
 
   console.log(`🔔 Open Track Triggered for Lead: ${leadId}`);
 
-  # Trigger a silent cloud alert directly to your inbox
+  // Trigger a silent cloud alert directly to your inbox using web standards
   try {
-    # Replace this webhook URL with any simple notification channel or email api
     await fetch('https://resend.com', {
       method: 'POST',
       headers: {
@@ -27,7 +26,7 @@ export async function GET(request: Request) {
     console.log('Notification relay skipped.');
   }
 
-  # Return 1x1 transparent tracking pixel GIF
+  // Return 1x1 transparent tracking pixel GIF buffer safely
   const pixel = Buffer.from(
     'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
     'base64'
