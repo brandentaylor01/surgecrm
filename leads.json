@@ -19,7 +19,9 @@
     "value": 6.99,
     "assignedClientId": "client_1",
     "customProposalJson": "[{\"id\":\"item_1788472220272\",\"name\":\"phone line\",\"price\":6.99,\"category\":\"HARDWARE\"}]",
-    "roofing_contacted": true
+    "roofing_contacted": true,
+    "contacted": true,
+    "date_contacted": "2026-09-08"
   },
   {
     "id": "lead_1788458081959",
@@ -30,7 +32,9 @@
     "status": "New",
     "value": 18500,
     "assignedClientId": "client_1",
-    "roofing_contacted": true
+    "roofing_contacted": true,
+    "contacted": true,
+    "date_contacted": "2026-09-08"
   },
   {
     "id": "opp_1788467428302",
