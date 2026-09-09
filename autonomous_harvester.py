@@ -1,15 +1,15 @@
-import os, time, requests, random, urllib.parse
+import os, time, requests, random, urllib.parse, uuid
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 
-# Fixed to use your exact live Supabase project database URL
+# Points directly to your live production opportunities data cluster node
 SUPABASE_URL = "https://supabase.co"
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "sb_publishable_CJ3gu19QTicTZq_W2M2inA_UglF98EL")
 
 TARGET_SECTORS = ['Logistics', 'Material Handling', 'Commercial Security', 'Packaging']
-TARGET_CITIES = ['Cleveland, OH', 'Akron, OH', 'Canton, OH', 'Youngstown, OH']
-ROLES = ['Owner', 'CEO', 'President', 'Operations Manager', 'Director']
+TARGET_CITIES = ['Cleveland', 'Akron', 'Canton', 'Youngstown']
+ROLES = ['Owner', 'CEO', 'President', 'Operations Manager']
 
 def stream_direct_to_supabase(payload):
     headers = {
@@ -50,12 +50,15 @@ def search_lead_intel(driver, sector, city, role):
         for email in emails:
             low = email.lower()
             if not any(k in low for k in ['embold', 'marketing', 'design', 'agency']):
-                # Perfectly targets your specific database schema columns
+                # Perfectly forms the data payload to match your exact schema keys
                 leads.append({
+                    "id": str(uuid.uuid4()), # Generates the required text primary key string
                     "email": email,
-                    "company": f"{sector} Lead ({role})",
-                    "name": "Valued Partner",
-                    "contacted": False
+                    "company_account": f"{sector} Co ({city})",
+                    "industry_sector": sector.upper(),
+                    "city": city,
+                    "status": "qualifying",
+                    "client_workspace": "rainmaker"
                 })
     except Exception as e:
         print(f"Scrape pass exception: {str(e)}")
@@ -83,10 +86,10 @@ def run_247_dataaxle_cloud_harvest():
     
     raw_hits = search_lead_intel(driver, sector, city, role)
     if raw_hits:
-        print(f"📈 Found {len(raw_hits)} fresh contacts. Syncing to database...")
+        print(f"📈 Found {len(raw_hits)} records. Syncing to opportunities table...")
         stream_direct_to_supabase(raw_hits)
     else:
-        print("ℹ️ No new distinct email signatures discovered in this pass.")
+        print("ℹ️ No new distinct targets discovered in this pass.")
         
     driver.quit()
 
