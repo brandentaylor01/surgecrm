@@ -1,4 +1,6 @@
-import os, time, requests, random, urllib.parse, uuid, json
+import os, time, requests, random, urllib.parse, uuid, json, smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
@@ -10,6 +12,37 @@ AI_KEY = os.environ.get("OPENAI_API_KEY")
 TARGET_SECTORS = ['Logistics', 'Material Handling', 'Commercial Security', 'Packaging']
 TARGET_CITIES = ['Cleveland', 'Akron', 'Canton', 'Youngstown']
 ROLES = ['Owner', 'CEO', 'President', 'Operations Manager']
+
+def send_autonomous_pitch(to_email, company_name):
+    # Automated cloud email delivery system using your secure Spacemail settings
+    msg = MIMEMultipart()
+    msg['From'] = '"Branden Taylor" <branden@hirerainmakers.com>'
+    msg['To'] = to_email
+    msg['Subject'] = 'operational bottleneck?'
+
+    body = f"""<p>Hi Partner,</p>
+    <p>Most business owners I speak with in Ohio tell me they are completely fed up with the
+    exhausting cycle of recruiting, training, and managing sales staff—only for them to
+    underperform or leave right when the pipeline starts moving.</p>
+    <p>We built Rainmaker Sales LLC as a white-label solution to solve that exact headache.
+    We completely take over the hiring, training, marketing, and closing execution from
+    start to finish, so you can just focus on operations.</p>
+    <p>I have no idea if your team at {company_name} is currently dealing with workflow shortages
+    right now, or if you already have a locked-in staff that hits their numbers every week.</p>
+    <p>Either way, do you have 15 minutes next week to see if it makes sense to explore
+    this further? If not, no worries at all.</p>"""
+    
+    msg.attach(MIMEText(body, 'html'))
+    try:
+        with smtplib.SMTP("smtp.spaceship.email", 587) as server:
+            server.starttls()
+            server.login("branden@hirerainmakers.com", "Teamrain365!")
+            server.sendmail("branden@hirerainmakers.com", to_email, msg.as_string())
+        print(f"   📬 Automated Outbound Success: Pitch sent cleanly to {to_email}")
+        return True
+    except Exception as e:
+        print(f"   ⚠️ Cloud SMTP Block: {str(e)}")
+        return False
 
 def stream_direct_to_supabase(payload):
     headers = {
@@ -27,16 +60,7 @@ def stream_direct_to_supabase(payload):
 
 def parse_intel_with_ai(raw_text, sector, default_city):
     if not AI_KEY:
-        return [{
-            "id": str(uuid.uuid4()),
-            "email": f"info@{sector.lower().replace(' ', '')}ohio.com",
-            "company_account": f"{sector} Corporate Hub",
-            "industry_sector": sector.upper(),
-            "city": default_city,
-            "status": "qualifying",
-            "client_workspace": "rainmaker"
-        }]
-
+        return []
     prompt = f"Extract business email, real company name, and Ohio city from this text: {raw_text}"
     try:
         res = requests.post(
@@ -51,11 +75,8 @@ def parse_intel_with_ai(raw_text, sector, default_city):
         )
         data = res.json()
         content = json.loads(data['choices']['message']['content'])
-        
         email = content.get("email")
-        if not email or "@" not in email:
-            return []
-
+        if not email or "@" not in email: return []
         return [{
             "id": str(uuid.uuid4()),
             "email": email,
@@ -65,29 +86,18 @@ def parse_intel_with_ai(raw_text, sector, default_city):
             "status": "qualifying",
             "client_workspace": "rainmaker"
         }]
-    except Exception:
-        return []
+    except Exception: return []
 
 def search_lead_intel(driver, sector, city, role):
     leads = []
     query = f'site:://linkedin.com "{role}" "{sector}" "{city}" email'
     encoded_query = urllib.parse.quote_plus(query)
-    
-    search_engines = [
-        f"https://duckduckgo.com{encoded_query}",
-        f"https://bing.com{encoded_query}"
-    ]
-    
-    url = random.choice(search_engines)
+    url = f"https://duckduckgo.com{encoded_query}"
     try:
         driver.get(url)
         time.sleep(random.uniform(4, 8))
-        
         page_text = driver.find_element(By.TAG_NAME, "body").text
-        
-        # Line 66: Changed '||' to correct Python 'or' syntax to stop compilation failures
         if "captcha" in page_text.lower() or len(page_text.strip()) < 500:
-            print("⚠️ Bot wall detected. Deploying direct directory bypass...")
             fallback_url = (
                 f"https://yellowpages.com?"
                 f"search_terms={urllib.parse.quote(sector)}&"
@@ -96,13 +106,9 @@ def search_lead_intel(driver, sector, city, role):
             driver.get(fallback_url)
             time.sleep(5)
             page_text = driver.find_element(By.TAG_NAME, "body").text
-
         parsed_leads = parse_intel_with_ai(page_text[:3000], sector, city)
-        if parsed_leads:
-            leads.extend(parsed_leads)
-    except Exception as e:
-        print(f"Scrape pass exception: {str(e)}")
-        
+        if parsed_leads: leads.extend(parsed_leads)
+    except Exception as e: print(f"Scrape pass exception: {str(e)}")
     return leads
 
 def run_247_dataaxle_cloud_harvest():
@@ -110,29 +116,20 @@ def run_247_dataaxle_cloud_harvest():
     city = random.choice(TARGET_CITIES)
     role = random.choice(ROLES)
     print(f"🚀 Initializing Deep Hunt for: {role} - {sector} in {city}...")
-    
     options = Options()
     options.add_argument("--headless=new")
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--disable-extensions")
-    
-    chrome_bin = os.environ.get("CHROME_BIN")
-    if chrome_bin:
-        options.binary_location = chrome_bin
-
     driver = webdriver.Chrome(options=options)
-    
     raw_hits = search_lead_intel(driver, sector, city, role)
     if raw_hits and len(raw_hits) > 0:
-        first_lead = raw_hits[0]
-        if first_lead.get("email") and "placeholder.com" not in first_lead.get("email"):
-            print(f"📈 Found contact: {first_lead['email']}. Syncing...")
+        lead = raw_hits[0]
+        # Executes the automatic email blast out of the unrestricted cloud network instantly
+        send_autonomous_pitch(lead["email"], lead["company_account"])
         stream_direct_to_supabase(raw_hits)
     else:
         print("ℹ️ Waiting for AI Key validation or fresh data hits.")
-        
     driver.quit()
 
 if __name__ == "__main__":
