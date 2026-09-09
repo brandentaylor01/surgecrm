@@ -1,23 +1,28 @@
 import os, time, requests, random
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.service import Service
-from spacemail_sender import send_spacemail
 
-# Explicit correct database node endpoint layout
+# Core API endpoints matching your active database tables
 SUPABASE_URL = "https://supabase.co"
-SUPABASE_KEY = "sb_publishable_CJ3gu19QTicTZq_W2M2inA_UglF98EL"
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "sb_publishable_CJ3gu19QTicTZq_W2M2inA_UglF98EL")
 
-TARGET_SECTORS = ['Logistics', 'Solar Energy', 'Material Handling', 'Commercial Security', 'Packaging']
+TARGET_SECTORS = ['Logistics', 'Material Handling', 'Commercial Security', 'Packaging']
 TARGET_CITIES = ['Cleveland, OH', 'Columbus, OH', 'Cincinnati, OH', 'Dayton, OH', 'Toledo, OH']
 
 def stream_direct_to_supabase(payload):
-    headers = {"apikey": SUPABASE_KEY, "Authorization": f"Bearer {SUPABASE_KEY}", "Content-Type": "application/json"}
+    headers = {
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_KEY}",
+        "Content-Type": "application/json",
+        "Prefer": "resolution=merge-duplicates"
+    }
     try:
         res = requests.post(SUPABASE_URL, headers=headers, json=payload, timeout=8)
         return res.status_code < 300
-    except Exception: return False
+    except Exception as e:
+        print(f"Sync error: {str(e)}")
+        return False
 
 def run_247_dataaxle_cloud_harvest():
     current_sector = random.choice(TARGET_SECTORS)
@@ -31,8 +36,12 @@ def run_247_dataaxle_cloud_harvest():
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-extensions")
     
-    service = Service(ChromeDriverManager().install())
-    driver = webdriver.Chrome(service=service, options=options)
+    # Bypasses local webdriver manager to use the runner's native production binary
+    chrome_bin = os.environ.get("CHROME_BIN")
+    if chrome_bin:
+        options.binary_location = chrome_bin
+
+    driver = webdriver.Chrome(options=options)
     
     print("✅ Extraction loop completed cleanly.")
     driver.quit()
