@@ -27,7 +27,6 @@ def stream_direct_to_supabase(payload):
 
 def parse_intel_with_ai(raw_text, sector, default_city):
     if not AI_KEY:
-        # Fallback tracking payload if no API key is present
         return [{
             "id": str(uuid.uuid4()),
             "email": "info@placeholder.com",
@@ -37,7 +36,6 @@ def parse_intel_with_ai(raw_text, sector, default_city):
             "status": "qualifying"
         }]
 
-    # Instructs the AI layer to parse unstructured search text into real data
     prompt = f"Extract business email, real company name, and Ohio city from this text: {raw_text}"
     try:
         res = requests.post(
@@ -51,11 +49,15 @@ def parse_intel_with_ai(raw_text, sector, default_city):
             timeout=10
         )
         data = res.json()
-        content = json.loads(data['choices'][0]['message']['content'])
+        content = json.loads(data['choices']['message']['content'])
         
+        email = content.get("email")
+        if not email or "@" not in email:
+            return []
+
         return [{
             "id": str(uuid.uuid4()),
-            "email": content.get("email"),
+            "email": email,
             "company_account": content.get("company_name", f"{sector} Co"),
             "industry_sector": sector.upper(),
             "city": content.get("city", default_city),
@@ -108,11 +110,12 @@ def run_247_dataaxle_cloud_harvest():
     driver = webdriver.Chrome(options=options)
     
     raw_hits = search_lead_intel(driver, sector, city, role)
-    if raw_hits and raw_hits[0].get("email") != "info@placeholder.com":
+    # Fixed lookup check to handle the lead list array properly
+    if raw_hits and len(raw_hits) > 0 and raw_hits[0]["email"] != "info@placeholder.com":
         print(f"📈 Found actual contact: {raw_hits[0]['email']}. Syncing...")
         stream_direct_to_supabase(raw_hits)
     else:
-        print("ℹ️ Waiting for AI Key validation to stream live records.")
+        print("ℹ️ Waiting for AI Key validation or fresh data hits.")
         
     driver.quit()
 
