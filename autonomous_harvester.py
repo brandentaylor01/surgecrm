@@ -1,9 +1,10 @@
-import os, time, requests, random, urllib.parse, uuid, json, smtplib
+import os, time, requests, random, urllib.parse, uuid, json, smtplib, re
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
+from bs4 import BeautifulSoup
 
 SUPABASE_URL = "https://supabase.co"
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "sb_publishable_CJ3gu19QTicTZq_W2M2inA_UglF98EL")
@@ -14,7 +15,6 @@ TARGET_CITIES = ['Cleveland', 'Akron', 'Canton', 'Youngstown']
 ROLES = ['Owner', 'CEO', 'President', 'Operations Manager']
 
 def send_autonomous_pitch(to_email, company_name):
-    # Automated cloud email delivery system using your secure Spacemail settings
     msg = MIMEMultipart()
     msg['From'] = '"Branden Taylor" <branden@hirerainmakers.com>'
     msg['To'] = to_email
@@ -58,9 +58,33 @@ def stream_direct_to_supabase(payload):
         print(f"Sync error: {str(e)}")
         return False
 
+def extract_raw_emails_via_regex(html_content):
+    # Aggressive pattern lookup matching valid corporate email layout strings
+    pattern = r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'
+    found = re.findall(pattern, html_content)
+    return [e.lower() for e in found if not any(k in e.lower() for k in [
+        'png', 'jpg', 'jpeg', 'gif', 'bootstrap', 'w3', 'wix', 'wordpress'
+    ])]
+
+def crawl_company_site_deep(driver, domain):
+    print(f"🕵️ Deep hunting internal subpages for: {domain}")
+    emails = set()
+    paths = ['', '/contact', '/about', '/team', '/contact-us', '/about-us']
+    
+    for path in paths:
+        try:
+            driver.get(f"https://{domain}{path}")
+            time.sleep(2)
+            html = driver.page_source
+            page_emails = extract_raw_emails_via_regex(html)
+            emails.update(page_emails)
+            if len(emails) > 3: break # Limit depth to optimize workflow runtime speeds
+        except Exception:
+            continue
+    return list(emails)
+
 def parse_intel_with_ai(raw_text, sector, default_city):
-    if not AI_KEY:
-        return []
+    if not AI_KEY: return []
     prompt = f"Extract business email, real company name, and Ohio city from this text: {raw_text}"
     try:
         res = requests.post(
@@ -90,25 +114,46 @@ def parse_intel_with_ai(raw_text, sector, default_city):
 
 def search_lead_intel(driver, sector, city, role):
     leads = []
-    query = f'site:://linkedin.com "{role}" "{sector}" "{city}" email'
+    # Broadened search criteria to catch raw domain maps outside of LinkedIn
+    query = f'"{sector}" "{city}" company email contact'
     encoded_query = urllib.parse.quote_plus(query)
+    
     url = f"https://duckduckgo.com{encoded_query}"
     try:
         driver.get(url)
         time.sleep(random.uniform(4, 8))
-        page_text = driver.find_element(By.TAG_NAME, "body").text
-        if "captcha" in page_text.lower() or len(page_text.strip()) < 500:
-            fallback_url = (
-                f"https://yellowpages.com?"
-                f"search_terms={urllib.parse.quote(sector)}&"
-                f"geo_location={urllib.parse.quote(city)}%2C+OH"
-            )
-            driver.get(fallback_url)
-            time.sleep(5)
-            page_text = driver.find_element(By.TAG_NAME, "body").text
-        parsed_leads = parse_intel_with_ai(page_text[:3000], sector, city)
-        if parsed_leads: leads.extend(parsed_leads)
-    except Exception as e: print(f"Scrape pass exception: {str(e)}")
+        
+        soup = BeautifulSoup(driver.page_source, 'html.parser')
+        links = []
+        for a in soup.find_all('a', href=True):
+            href = a['href']
+            if 'uddg=' in href:
+                actual_url = urllib.parse.unquote(href.split('uddg=')[1].split('&')[0])
+                links.append(actual_url)
+
+        # Grabs the top 3 company websites and rips their internal text matrix
+        for link in links[:3]:
+            domain_match = re.search(r'https?://([^/]+)', link)
+            if not domain_match: continue
+            domain = domain_match.group(1).replace('www.', '')
+            
+            if any(k in domain for k in ['duckduckgo', 'google', 'bing', 'yahoo', 'linkedin']):
+                continue
+                
+            found_emails = crawl_company_site_deep(driver, domain)
+            for email in found_emails:
+                leads.append({
+                    "id": str(uuid.uuid4()),
+                    "email": email,
+                    "company_account": f"{domain.split('.')[0].upper()} LLC",
+                    "industry_sector": sector.upper(),
+                    "city": city,
+                    "status": "qualifying",
+                    "client_workspace": "rainmaker"
+                })
+    except Exception as e:
+        print(f"Scrape pass exception: {str(e)}")
+        
     return leads
 
 def run_247_dataaxle_cloud_harvest():
@@ -116,20 +161,21 @@ def run_247_dataaxle_cloud_harvest():
     city = random.choice(TARGET_CITIES)
     role = random.choice(ROLES)
     print(f"🚀 Initializing Deep Hunt for: {role} - {sector} in {city}...")
+    
     options = Options()
     options.add_argument("--headless=new")
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     driver = webdriver.Chrome(options=options)
+    
     raw_hits = search_lead_intel(driver, sector, city, role)
     if raw_hits and len(raw_hits) > 0:
-        lead = raw_hits[0]
-        # Executes the automatic email blast out of the unrestricted cloud network instantly
-        send_autonomous_pitch(lead["email"], lead["company_account"])
+        for lead in raw_hits:
+            send_autonomous_pitch(lead["email"], lead["company_account"])
         stream_direct_to_supabase(raw_hits)
     else:
-        print("ℹ️ Waiting for AI Key validation or fresh data hits.")
+        print("ℹ️ No new distinct email signatures discovered in this pass.")
     driver.quit()
 
 if __name__ == "__main__":
