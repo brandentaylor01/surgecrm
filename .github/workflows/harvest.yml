@@ -2,34 +2,36 @@ name: Rainmaker 24/7 Autonomous Core
 
 on:
   schedule:
-    - cron: '0 * * * *'
+    # Safely forces GitHub to wake up and execute your pipeline every 5 minutes 24/7
+    - cron: '*/5 * * * *'
   workflow_dispatch:
 
+permissions:
+  contents: write
+  actions: write
+
 jobs:
-  harvest:
+  autonomous-agency-loop:
     runs-on: ubuntu-latest
     steps:
-      - name: Pull repository code
-        uses: actions/checkout@v4
+    - name: Checkout Code Repository
+      uses: actions/checkout@v4
 
-      - name: Configure Python environment
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.9'
+    - name: Initialize Environment Runtimes
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.9'
 
-      - name: Setup Headless Chrome
-        uses: browser-actions/setup-chrome@v1
-        with:
-          chrome-version: stable
+    - name: Provision Headless Scraping Infrastructure
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y google-chrome-stable
+        pip install beautifulsoup4 requests selenium==4.20.0 webdriver-manager 'urllib3<2.0'
 
-      - name: Install extraction dependencies
-        run: |
-          pip install pandas requests supabase selenium webdriver-manager
-
-      - name: Execute extraction loop
-        run: |
-          python3 autonomous_harvester.py
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    - name: 🤖 RUN AUTONOMOUS HARVESTER PIPELINE
+      run: |
+        python autonomous_harvester.py
+      env:
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
