@@ -2,9 +2,8 @@ name: Rainmaker 24/7 Autonomous Core
 
 on:
   schedule:
-    # Triggers the cloud harvester to wake up every hour on the dot
     - cron: '0 * * * *'
-  workflow_dispatch: # Allows you to manually trigger it with a button click on GitHub
+  workflow_dispatch:
 
 jobs:
   harvest:
@@ -17,7 +16,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.9'
-          cache: 'pip'
 
       - name: Install extraction dependencies
         run: |
