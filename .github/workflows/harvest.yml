@@ -24,7 +24,7 @@ jobs:
 
       - name: Install extraction dependencies
         run: |
-          pip install pandas requests supabase selenium
+          pip install pandas requests supabase selenium webdriver-manager
 
       - name: Execute extraction loop
         run: |
