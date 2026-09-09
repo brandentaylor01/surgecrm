@@ -17,9 +17,14 @@ jobs:
         with:
           python-version: '3.9'
 
+      - name: Setup Headless Chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+
       - name: Install extraction dependencies
         run: |
-          pip install pandas requests supabase
+          pip install pandas requests supabase selenium
 
       - name: Execute extraction loop
         run: |
