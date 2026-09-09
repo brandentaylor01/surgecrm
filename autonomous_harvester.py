@@ -1,14 +1,14 @@
-import os, time, requests, random
+import os, time, requests, random, urllib.parse
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
 
-# Core API endpoints matching your active database tables
 SUPABASE_URL = "https://supabase.co"
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "sb_publishable_CJ3gu19QTicTZq_W2M2inA_UglF98EL")
 
 TARGET_SECTORS = ['Logistics', 'Material Handling', 'Commercial Security', 'Packaging']
-TARGET_CITIES = ['Cleveland, OH', 'Columbus, OH', 'Cincinnati, OH', 'Dayton, OH', 'Toledo, OH']
+TARGET_CITIES = ['Cleveland, OH', 'Akron, OH', 'Canton, OH', 'Youngstown, OH']
+ROLES = ['Owner', 'CEO', 'President', 'Operations Manager', 'Director']
 
 def stream_direct_to_supabase(payload):
     headers = {
@@ -24,10 +24,50 @@ def stream_direct_to_supabase(payload):
         print(f"Sync error: {str(e)}")
         return False
 
+def search_lead_intel(driver, sector, city, role):
+    leads = []
+    # Build low-profile dork strings to extract localized records safely
+    query = f'site:://linkedin.com "{role}" "{sector}" "{city}" email'
+    encoded_query = urllib.parse.quote_plus(query)
+    
+    # Cycles alternative engine roots to protect domain footprints
+    search_engines = [
+        f"https://duckduckgo.com{encoded_query}",
+        f"https://bing.com{encoded_query}"
+    ]
+    
+    url = random.choice(search_engines)
+    print(f"🔍 Harvesting via: {url}")
+    
+    try:
+        driver.get(url)
+        time.sleep(random.uniform(3, 7)) # Safe throttling intervals
+        
+        # Pull text contexts to mine for emails and target anchors
+        page_text = driver.find_element(By.TAG_NAME, "body").text
+        words = page_text.split()
+        
+        emails = set([w.strip("(),.递") for w in words if "@" in w and "." in w])
+        
+        for email in emails:
+            # Clean filtering matches
+            low = email.toLowerCase()
+            if not any(k in low for k in ['embold', 'marketing', 'design', 'agency']):
+                leads.append({
+                    "email": email,
+                    "name": f"{sector} Lead ({role})",
+                    "contacted": False
+                })
+    except Exception as e:
+        print(f"Scrape pass exception: {str(e)}")
+        
+    return leads
+
 def run_247_dataaxle_cloud_harvest():
-    current_sector = random.choice(TARGET_SECTORS)
-    current_city = random.choice(TARGET_CITIES)
-    print(f"🚀 Initializing Data Axle Scan for: {current_sector} in {current_city}...")
+    sector = random.choice(TARGET_SECTORS)
+    city = random.choice(TARGET_CITIES)
+    role = random.choice(ROLES)
+    print(f"🚀 Initializing Deep Hunt for: {role} - {sector} in {city}...")
     
     options = Options()
     options.add_argument("--headless=new")
@@ -36,14 +76,19 @@ def run_247_dataaxle_cloud_harvest():
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-extensions")
     
-    # Bypasses local webdriver manager to use the runner's native production binary
     chrome_bin = os.environ.get("CHROME_BIN")
     if chrome_bin:
         options.binary_location = chrome_bin
 
     driver = webdriver.Chrome(options=options)
     
-    print("✅ Extraction loop completed cleanly.")
+    raw_hits = search_lead_intel(driver, sector, city, role)
+    if raw_hits:
+        print(f"📈 Found {len(raw_hits)} fresh contacts. Syncing to database...")
+        stream_direct_to_supabase(raw_hits)
+    else:
+        print("ℹ️ No new distinct email signatures discovered in this pass.")
+        
     driver.quit()
 
 if __name__ == "__main__":
