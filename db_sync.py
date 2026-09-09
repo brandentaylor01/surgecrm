@@ -1,7 +1,6 @@
 import requests
 
-# Routes directly through your local development server gateway channel
-SITE_API_URL = "http://localhost:3000/api/opportunities"
+SITE_API_URL = "https://surgecrm.site"
 
 def add_to_web_opportunities(company_name, contact_name, email, value=2500):
     payload = {
@@ -15,18 +14,16 @@ def add_to_web_opportunities(company_name, contact_name, email, value=2500):
     
     try:
         response = requests.post(SITE_API_URL, json=payload, timeout=5)
-        # Direct mathematical check for standard insertion success
-        if response.status_code >= 200 and response.status_code < 300:
-            print(f"⚡ Live Sync: Added {company_name} to your local CRM dashboard!")
+        if 200 <= response.status_code < 300:
+            print(f"⚡ Live Sync: Added {company_name} to your SurgeCRM dashboard!")
             return True
         else:
-            print(f"⚠️ Local API responded with code {response.status_code}: {response.text}")
+            print(f"⚠️ Production API responded with code {response.status_code}: {response.text}")
             return False
     except Exception as e:
-        print(f"❌ Connection to local server failed: {e}")
-        print("💡 Tip: Make sure 'npm run dev' is actively running in your first terminal!")
+        print(f"❌ Connection to live server failed: {e}")
         return False
 
 if __name__ == "__main__":
-    print("Testing secure local server API integration loop...")
+    print("Testing secure live production server API integration loop...")
     add_to_web_opportunities("Test Enterprise LLC", "Branden Test", "test@test.com")

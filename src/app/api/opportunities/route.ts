@@ -1,40 +1,50 @@
-import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
-export async function GET() {
-  try {
-    const filePath = path.join(process.cwd(), 'leads.json');
-    if (!fs.existsSync(filePath)) return NextResponse.json([]);
-    const data = fs.readFileSync(filePath, 'utf-8');
-    return NextResponse.json(JSON.parse(data || '[]'));
-  } catch (err) {
-    return NextResponse.json({ error: "Read failure" }, { status: 500 });
-  }
-}
+import { NextResponse } from 'next/server';
+
+const SUPABASE_URL = "https://supabase.co";
+const SUPABASE_KEY = "sb_publishable_CJ3gu19QTicTZq_W2M2inA_UglF98EL";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const filePath = path.join(process.cwd(), 'leads.json');
-    let currentLeads = [];
-    if (fs.existsSync(filePath)) {
-      currentLeads = JSON.parse(fs.readFileSync(filePath, 'utf-8') || '[]');
-    }
-    currentLeads.push(body);
-    fs.writeFileSync(filePath, JSON.stringify(currentLeads, null, 2));
-    return NextResponse.json({ success: true }, { status: 201 });
-  } catch (err) {
-    return NextResponse.json({ error: "Write error" }, { status: 400 });
-  }
-}
+    const { company, name, email, value, status, priority, city, niche } = body;
 
-export async function DELETE() {
-  try {
-    const filePath = path.join(process.cwd(), 'leads.json');
-    fs.writeFileSync(filePath, JSON.stringify([], null, 2));
-    return NextResponse.json({ message: "Wiped successfully" });
-  } catch (err) {
-    return NextResponse.json({ error: "Wipe error" }, { status: 500 });
+    if (!company) {
+      return NextResponse.json({ error: 'Missing core tracking metric: company' }, { status: 400 });
+    }
+
+    // Direct network bridge into your live Supabase table matrix
+    const res = await fetch(SUPABASE_URL, {
+      method: 'POST',
+      headers: {
+        "apikey": SUPABASE_KEY,
+        "Authorization": `Bearer ${SUPABASE_KEY}`,
+        "Content-Type": "application/json",
+        "Prefer": "return=representation"
+      },
+      body: JSON.stringify({
+        company: company,
+        name: name || 'Founder',
+        email: email || null,
+        value: Number(value) || 2500,
+        status: status || 'Discovered',
+        priority: priority || 'High',
+        city: city || null,
+        niche: niche || null,
+        contacted: false
+      })
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      return NextResponse.json({ error: 'Database rejected record injection', details: errText }, { status: res.status });
+    }
+
+    const insertedData = await res.json();
+    return NextResponse.json({ success: true, message: 'Lead added to matrix successfully', data: insertedData });
+  } catch (err: any) {
+    return NextResponse.json({ error: 'Internal pipeline connection bypass', details: err.message }, { status: 500 });
   }
 }

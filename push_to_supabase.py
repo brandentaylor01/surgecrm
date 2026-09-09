@@ -1,56 +1,51 @@
-import csv
 import os
-import requests
+import glob
+import pandas as pd
+from supabase import create_client
 
-CSV_FILE = "leads.csv"
-SUPABASE_URL = "https://vercel.app"
-SUPABASE_KEY = "sb_publishable_CJ3gu19QTicTZq_W2M2inA_UglF98EL"
+SUPABASE_URL = "https://supabase.co"
+SUPABASE_KEY = "YOUR_SUPABASE_SERVICE_ROLE_KEY" 
 
-def push_csv_to_supabase():
-    if not os.path.exists(CSV_FILE):
-        print(f"Error: {CSV_FILE} not found. Place your library list here!")
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+def upload_leads():
+    csv_files = glob.glob("*.csv")
+    if not csv_files:
+        print("❌ No CSV files discovered in the root directory.")
         return
 
-    headers = {
-        "apikey": SUPABASE_KEY,
-        "Authorization": f"Bearer {SUPABASE_KEY}",
-        "Content-Type": "application/json"
-    }
+    print(f"🔎 Found {len(csv_files)} tracking files to process...")
+    
+    for file in csv_files:
+        if file == "delivered_leads.csv":
+            continue
+            
+        print(f"🚀 Parsing: {file}")
+        try:
+            df = pd.read_csv(file)
+            df.columns = [c.lower().strip() for c in df.columns]
+            
+            e_col = next((c for c in df.columns if c in ['email', 'contact']), None)
+            n_col = next((c for c in df.columns if c in ['name', 'business_name']), None)
 
-    print("🚀 Initiating cloud database sync from library export...")
-    success_count = 0
-    session = requests.Session()
-    session.headers.update(headers)
-
-    with open(CSV_FILE, mode='r', encoding='utf-8-sig', errors='ignore') as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            company = row.get("Company Name", row.get("Business Name", "Ohio Local Biz")).strip()
-            first = row.get("Executive First Name", "").strip()
-            last = row.get("Executive Last Name", "").strip()
-            name = f"{first} {last}".strip() if (first or last) else "Business Owner"
-            email = row.get("Email Address", "").strip()
-
-            if not email:
+            if not e_col:
+                print(f"   ⚠️ Skipping {file}: No valid email header column located.")
                 continue
 
-            payload = {
-                "company": company,
-                "name": name,
-                "email": email.lower(),
-                "value": 2500,
-                "status": "Verified Intake",
-                "priority": "High"
-            }
+            for _, row in df.iterrows():
+                email = str(row[e_col]).strip()
+                name = str(row[n_col]).strip() if n_col and pd.notna(row[n_col]) else "Partner"
 
-            try:
-                res = session.post(SUPABASE_URL, json=payload, timeout=5)
-                if 200 <= res.status_code < 300:
-                    success_count += 1
-            except Exception:
-                continue
-
-    print(f"⚡ Live Sync Complete! Pushed {success_count} Ohio records straight to your website dashboard.")
+                if "@" in email:
+                    try:
+                        supabase.table("leads").insert(
+                            {"email": email, "name": name, "contacted": False}
+                        ).execute()
+                        print(f"   ✅ Synchronized: {email}")
+                    except Exception:
+                        pass
+        except Exception as e:
+            print(f"   ❌ Read failed for {file}: {str(e)}")
 
 if __name__ == "__main__":
-    push_csv_to_supabase()
+    upload_leads()

@@ -43,7 +43,7 @@ def run_humanized_outreach():
         subject = "quick question about your outbound pipeline"
         
         # Build clean HTML content containing the tracking pixel parameter
-        tracking_url = f"https://vercel.app{lead_id}&client=rainmaker"
+        tracking_url = f"https://surgecrm.site{lead_id}&client=rainmaker"
         
         body = (
             f"<p>Hi {name},</p>"
