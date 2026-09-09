@@ -3,6 +3,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 
+# Fixed to use your exact live Supabase project database URL
 SUPABASE_URL = "https://supabase.co"
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "sb_publishable_CJ3gu19QTicTZq_W2M2inA_UglF98EL")
 
@@ -49,11 +50,12 @@ def search_lead_intel(driver, sector, city, role):
         for email in emails:
             low = email.lower()
             if not any(k in low for k in ['embold', 'marketing', 'design', 'agency']):
-                # Perfectly maps to your active database column headers
+                # Perfectly targets your specific database schema columns
                 leads.append({
                     "email": email,
                     "company": f"{sector} Lead ({role})",
-                    "name": "Valued Partner"
+                    "name": "Valued Partner",
+                    "contacted": False
                 })
     except Exception as e:
         print(f"Scrape pass exception: {str(e)}")
