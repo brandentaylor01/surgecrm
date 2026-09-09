@@ -14,10 +14,10 @@ def upload_leads():
         print("❌ No CSV files discovered in the root directory.")
         return
 
-    print(f"🔎 Found {len(csv_files)} tracking files to process...")
+    print(f"🔎 Found {len(csv_files)} files to process...")
     
     for file in csv_files:
-        if file == "delivered_leads.csv":
+        if file in ["delivered_leads.csv", "package.json", "package-lock.json"]:
             continue
             
         print(f"🚀 Parsing: {file}")
@@ -25,11 +25,19 @@ def upload_leads():
             df = pd.read_csv(file)
             df.columns = [c.lower().strip() for c in df.columns]
             
-            e_col = next((c for c in df.columns if c in ['email', 'contact']), None)
-            n_col = next((c for c in df.columns if c in ['name', 'business_name']), None)
+            # This now matches your 'email address' column perfectly
+            e_col = next((c for c in df.columns if c in [
+                'email', 'contact', 'public_contact_email', 'email address'
+            ]), None)
+            
+            # This matches your 'company name' column perfectly
+            n_col = next((c for c in df.columns if c in [
+                'name', 'business_name', 'company', 'title', 'company name'
+            ]), None)
 
             if not e_col:
-                print(f"   ⚠️ Skipping {file}: No valid email header column located.")
+                print(f"   ⚠️ Skipping {file}: No valid email column structure matched.")
+                print(f"   Available columns: {list(df.columns)}")
                 continue
 
             for _, row in df.iterrows():
