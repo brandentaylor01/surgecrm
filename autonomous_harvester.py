@@ -26,11 +26,9 @@ def stream_direct_to_supabase(payload):
 
 def search_lead_intel(driver, sector, city, role):
     leads = []
-    # Build low-profile dork strings to extract localized records safely
     query = f'site:://linkedin.com "{role}" "{sector}" "{city}" email'
     encoded_query = urllib.parse.quote_plus(query)
     
-    # Cycles alternative engine roots to protect domain footprints
     search_engines = [
         f"https://duckduckgo.com{encoded_query}",
         f"https://bing.com{encoded_query}"
@@ -41,22 +39,21 @@ def search_lead_intel(driver, sector, city, role):
     
     try:
         driver.get(url)
-        time.sleep(random.uniform(3, 7)) # Safe throttling intervals
+        time.sleep(random.uniform(3, 7))
         
-        # Pull text contexts to mine for emails and target anchors
         page_text = driver.find_element(By.TAG_NAME, "body").text
         words = page_text.split()
         
         emails = set([w.strip("(),.递") for w in words if "@" in w and "." in w])
         
         for email in emails:
-            # Clean filtering matches
-            low = email.toLowerCase()
+            low = email.lower()
             if not any(k in low for k in ['embold', 'marketing', 'design', 'agency']):
+                # Perfectly maps to your active database column headers
                 leads.append({
                     "email": email,
-                    "name": f"{sector} Lead ({role})",
-                    "contacted": False
+                    "company": f"{sector} Lead ({role})",
+                    "name": "Valued Partner"
                 })
     except Exception as e:
         print(f"Scrape pass exception: {str(e)}")
