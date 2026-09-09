@@ -1,11 +1,11 @@
-import os, time, requests, random, urllib.parse, uuid
+import os, time, requests, random, urllib.parse, uuid, json
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 
-# Points directly to your live production opportunities data cluster node
 SUPABASE_URL = "https://supabase.co"
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "sb_publishable_CJ3gu19QTicTZq_W2M2inA_UglF98EL")
+AI_KEY = os.environ.get("OPENAI_API_KEY")
 
 TARGET_SECTORS = ['Logistics', 'Material Handling', 'Commercial Security', 'Packaging']
 TARGET_CITIES = ['Cleveland', 'Akron', 'Canton', 'Youngstown']
@@ -25,6 +25,46 @@ def stream_direct_to_supabase(payload):
         print(f"Sync error: {str(e)}")
         return False
 
+def parse_intel_with_ai(raw_text, sector, default_city):
+    if not AI_KEY:
+        # Fallback tracking payload if no API key is present
+        return [{
+            "id": str(uuid.uuid4()),
+            "email": "info@placeholder.com",
+            "company_account": f"{sector} Company",
+            "industry_sector": sector.upper(),
+            "city": default_city,
+            "status": "qualifying"
+        }]
+
+    # Instructs the AI layer to parse unstructured search text into real data
+    prompt = f"Extract business email, real company name, and Ohio city from this text: {raw_text}"
+    try:
+        res = requests.post(
+            "https://openai.com",
+            headers={"Authorization": f"Bearer {AI_KEY}", "Content-Type": "application/json"},
+            json={
+                "model": "gpt-4o-mini",
+                "messages": [{"role": "user", "content": prompt}],
+                "response_format": { "type": "json_object" }
+            },
+            timeout=10
+        )
+        data = res.json()
+        content = json.loads(data['choices'][0]['message']['content'])
+        
+        return [{
+            "id": str(uuid.uuid4()),
+            "email": content.get("email"),
+            "company_account": content.get("company_name", f"{sector} Co"),
+            "industry_sector": sector.upper(),
+            "city": content.get("city", default_city),
+            "status": "qualifying",
+            "client_workspace": "rainmaker"
+        }]
+    except Exception:
+        return []
+
 def search_lead_intel(driver, sector, city, role):
     leads = []
     query = f'site:://linkedin.com "{role}" "{sector}" "{city}" email'
@@ -36,30 +76,13 @@ def search_lead_intel(driver, sector, city, role):
     ]
     
     url = random.choice(search_engines)
-    print(f"🔍 Harvesting via: {url}")
-    
     try:
         driver.get(url)
         time.sleep(random.uniform(3, 7))
         
         page_text = driver.find_element(By.TAG_NAME, "body").text
-        words = page_text.split()
-        
-        emails = set([w.strip("(),.递") for w in words if "@" in w and "." in w])
-        
-        for email in emails:
-            low = email.lower()
-            if not any(k in low for k in ['embold', 'marketing', 'design', 'agency']):
-                # Perfectly forms the data payload to match your exact schema keys
-                leads.append({
-                    "id": str(uuid.uuid4()), # Generates the required text primary key string
-                    "email": email,
-                    "company_account": f"{sector} Co ({city})",
-                    "industry_sector": sector.upper(),
-                    "city": city,
-                    "status": "qualifying",
-                    "client_workspace": "rainmaker"
-                })
+        parsed_leads = parse_intel_with_ai(page_text[:2000], sector, city)
+        leads.extend(parsed_leads)
     except Exception as e:
         print(f"Scrape pass exception: {str(e)}")
         
@@ -85,11 +108,11 @@ def run_247_dataaxle_cloud_harvest():
     driver = webdriver.Chrome(options=options)
     
     raw_hits = search_lead_intel(driver, sector, city, role)
-    if raw_hits:
-        print(f"📈 Found {len(raw_hits)} records. Syncing to opportunities table...")
+    if raw_hits and raw_hits[0].get("email") != "info@placeholder.com":
+        print(f"📈 Found actual contact: {raw_hits[0]['email']}. Syncing...")
         stream_direct_to_supabase(raw_hits)
     else:
-        print("ℹ️ No new distinct targets discovered in this pass.")
+        print("ℹ️ Waiting for AI Key validation to stream live records.")
         
     driver.quit()
 
