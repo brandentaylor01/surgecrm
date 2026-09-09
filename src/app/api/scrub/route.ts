@@ -1,4 +1,10 @@
 import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 function formatTextString(text: string): string {
   if (!text) return 'N/A';
@@ -22,23 +28,32 @@ export async function POST(request: Request) {
     const { rawLeadsList } = await request.json();
     if (!Array.isArray(rawLeadsList)) throw new Error('Data format error');
 
-    // Scrapes, filters and formats incoming raw target rows cleanly
     const refinedDataRows = rawLeadsList
       .filter(item => {
         const title = item.company_name || item.account_name || '';
         return !title.toLowerCase().includes('placeholder') && !title.includes('#');
       })
       .map(item => ({
-        account_name: formatTextString(item.company_name || item.account_name),
-        contact_name: formatTextString(item.executive_contact || item.contact_name),
-        contact_email: (item.email_address || item.contact_email || 'n/a').trim().toLowerCase(),
-        phone_number: formatPhoneLayout(item.phone || item.phone_number || ''),
-        location_details: item.address || item.location_details || 'N/A',
-        financial_matrix: parseFloat(item.revenue || item.financial_matrix) || 0.00,
-        stage: 'Verified Intake'
-      }));
+        name: formatTextString(item.company_name || item.account_name),
+        email: (item.email_address || item.contact_email || '').trim().toLowerCase(),
+        contacted: false
+      }))
+      .filter(item => item.email && item.email.includes('@'));
 
-    return NextResponse.json({ success: true, count: refinedDataRows.length, scrubbedLeads: refinedDataRows });
+    if (refinedDataRows.length > 0) {
+      // Upserts the scrubbed rows straight into your live cloud table layout
+      const { error } = await supabase
+        .from('leads')
+        .upsert(refinedDataRows, { onConflict: 'email' });
+
+      if (error) throw error;
+    }
+
+    return NextResponse.json({
+      success: true,
+      count: refinedDataRows.length,
+      message: 'Scrubbed rows securely pushed to database cluster.'
+    });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
