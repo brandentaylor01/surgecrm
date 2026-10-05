@@ -44,10 +44,9 @@ export default function DashboardLeadsPage() {
     <SalesforceLayout>
       <div className="min-h-screen bg-[#f8fafc] text-slate-800 p-8 font-sans antialiased">
         
-        {/* Bright White Salesforce Premium Header */}
         <div className="bg-white border border-slate-200 p-6 rounded-2xl mb-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-            <div className="p-3.5 bg-blue-600 text-white rounded-xl shadow-md shadow-blue-500/10">
+            <div className="p-3.5 bg-blue-600 text-white rounded-xl shadow-md">
               <Building size={26} />
             </div>
             <div>
@@ -62,9 +61,8 @@ export default function DashboardLeadsPage() {
           </button>
         </div>
 
-        {/* High-Impact Executive KPI Analytics Board */}
         <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm relative overflow-hidden">
+          <div className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm">
             <div className="flex justify-between items-start mb-2">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Pipeline Volume</span>
               <span className="text-emerald-600 bg-emerald-50 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-0.5">
@@ -80,7 +78,6 @@ export default function DashboardLeadsPage() {
           <div className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm">
             <div className="flex justify-between items-start mb-2">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Apex Cap Strike</span>
-              <span className="text-slate-400 text-[10px] font-medium">Active Pass</span>
             </div>
             <h3 className="text-3xl font-black text-slate-900">${metrics.maxDeal.toLocaleString()}</h3>
             <p className="text-[11px] text-slate-400 mt-3 font-medium">Highest structural contract value</p>
@@ -89,14 +86,12 @@ export default function DashboardLeadsPage() {
           <div className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm">
             <div className="flex justify-between items-start mb-2">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Kinetic Win Ratio</span>
-              <span className="text-blue-600 bg-blue-50 text-[10px] font-bold px-2 py-0.5 rounded-full">Target ICP</span>
             </div>
             <h3 className="text-3xl font-black text-slate-900">{metrics.avgWin}%</h3>
             <p className="text-[11px] text-slate-400 mt-3 font-medium">Average conversion path probability</p>
           </div>
         </section>
 
-        {/* Visual Charts and Distribution Graphs Section */}
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           <div className="lg:col-span-2 bg-white border border-slate-200 p-6 rounded-2xl shadow-sm">
             <div className="flex items-center justify-between mb-6">
@@ -105,15 +100,11 @@ export default function DashboardLeadsPage() {
               </h4>
               <span className="text-xs text-slate-400 font-medium">By Account Value</span>
             </div>
-            {/* High-Fidelity Custom Pure CSS Chart Graph Visualization */}
             <div className="h-44 flex items-end justify-between gap-4 pt-4 px-2 border-b border-slate-100">
               {filteredLeads.map((l) => {
                 const heightPercentage = Math.max(15, Math.min(100, (l.value / 250000) * 100));
                 return (
                   <div key={l.id} className="flex-1 flex flex-col items-center gap-2 group cursor-pointer">
-                    <span className="opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-[9px] font-bold px-1.5 py-0.5 rounded absolute -translate-y-6 font-mono shadow-sm">
-                      \${Math.round(l.value/1000)}k
-                    </span>
                     <div 
                       className="w-full bg-gradient-to-t from-blue-600 to-blue-400 hover:from-blue-500 hover:to-blue-300 rounded-t-lg transition-all duration-500 shadow-sm"
                       style={{ height: `${heightPercentage}%` }}
@@ -149,7 +140,6 @@ export default function DashboardLeadsPage() {
           </div>
         </section>
 
-        {/* Filters and Ledger Data Matrix */}
         <div className="bg-white border border-slate-200 p-4 mb-6 rounded-2xl flex flex-col xl:flex-row gap-4 justify-between items-center shadow-sm">
           <div className="relative w-full xl:w-80">
             <Search className="absolute left-3.5 top-2.5 text-slate-400" size={15} />
@@ -158,7 +148,7 @@ export default function DashboardLeadsPage() {
               placeholder="Search prospects..." 
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-10 pr-4 py-2 text-xs focus:outline-none focus:border-blue-500 text-slate-700 transition-colors placeholder-slate-400" 
+              className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-10 pr-4 py-2 text-xs focus:outline-none focus:border-blue-500 text-slate-700 transition-colors" 
             />
           </div>
           <div className="flex flex-wrap items-center gap-1 w-full xl:w-auto">
@@ -174,7 +164,6 @@ export default function DashboardLeadsPage() {
           </div>
         </div>
 
-        {/* Clear White Enterprise Account Board */}
         <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -211,7 +200,7 @@ export default function DashboardLeadsPage() {
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-2">
                       <div className="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-blue-600 rounded-full transition-all duration-500" style={{ width: \`\${lead.conversion}%\` }} />
+                        <div className="h-full bg-blue-600 rounded-full transition-all duration-500" style={{ width: `${lead.conversion}%` }} />
                       </div>
                       <span className="font-mono text-[10px] text-slate-400 font-bold">{lead.conversion}%</span>
                     </div>
