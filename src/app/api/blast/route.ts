@@ -3,78 +3,125 @@ import { createClient } from '@supabase/supabase-js';
 import nodemailer from 'nodemailer';
 
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.SUPABASE_URL || 'https://supabase.co',
+  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 );
 
-const transporter = nodemailer.createTransport({
-  host: "smtp.spaceship.email",
-  port: 587,
-  secure: false, 
-  auth: {
-    user: "branden@hirerainmakers.com",
-    pass: "Teamrain365!"
-  },
-  tls: { rejectUnauthorized: false }
-});
-
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const { data: leads, error } = await supabase
-      .from('leads')
-      .select('id, email, name')
-      .eq('contacted', false)
-      .limit(10);
+    const host = request.headers.get('host') || '';
+    const parts = host.split('.');
+    const subdomain = parts[0] || 'default_tenant';
 
-    if (error) throw error;
-    if (!leads || leads.length === 0) {
-      return NextResponse.json({
-        status: 'Done',
-        message: 'All campaign pipelines processed successfully.'
-      });
+    console.log(`[🌐 CRON] Waking Multi-Tenant Outreach Core Engine for Subdomain: ${subdomain}`);
+
+    const { data: leads, error: dbError } = await supabase
+      .from('leads')
+      .select('*')
+      .eq('tenant_id', subdomain)
+      .eq('status', 'Verified Intake')
+      .limit(3);
+
+    if (dbError || !leads || leads.length === 0) {
+      return NextResponse.json({ message: 'Pipeline processed, no fresh intakes pending.' });
     }
 
-    let successCount = 0;
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.spaceship.email',
+      port: 587,
+      secure: false,
+      auth: {
+        user: process.env.SMTP_USER || 'branden@hirerainmakers.com',
+        pass: process.env.SMTP_PASS || 'Teamrain365!'
+      }
+    });
+
+    let successfullyDispatched = 0;
 
     for (const lead of leads) {
-      const email = lead.email?.toLowerCase().trim();
-      if (!email || email.includes('embold') || email.includes('marketing') ||
-          email.includes('design') || email.includes('agency')) {
-        await supabase.from('leads').update({ contacted: true }).eq('id', lead.id);
-        continue;
-      }
-
-      const options = {
-        from: '"Branden Taylor" <branden@hirerainmakers.com>',
-        to: lead.email,
-        subject: 'operational bottleneck?',
-        html: `<p>Hi ${lead.name || 'Valued Partner'},</p>
-               <p>Most business owners I speak with in Ohio tell me they are completely fed up
-               with the exhausting cycle of recruiting, training, and managing sales staff—only
-               for them to underperform or leave right when the pipeline starts moving.</p>
-               <p>We built Rainmaker Sales LLC as a white-label solution to solve that exact
-               headache. We completely take over the hiring, training, marketing, and closing
-               execution from start to finish, so you can just focus on operations.</p>
-               <p>I have no idea if your team is currently dealing with workflow shortages right
-               now, or if you already have a locked-in staff that hits their numbers every week.</p>
-               <p>Either way, do you have 15 minutes next week to see if it makes sense to explore
-               this further? If not, no worries at all.</p>`
-      };
+      const trackingUrl = `https://${host}/api/track?email=${encodeURIComponent(lead.email)}&tenant=${subdomain}`;
+      
+      const emailHtml = `
+        <div style="font-family:sans-serif;font-size:13px;color:#111;line-height:1.6;">
+          <p>Hi ${lead.name || 'Partner'},</p>
+          <p>Most growth groups pass off generic spreadsheets and vanish. We think that structure is completely broken.</p>
+          <p>We do the opposite—we build your outbound workflows and take real accountability for your conversion velocity.</p>
+          <p>Would you be open to exploring a short, 3-sentence breakdown of our localized pipeline strategies later this week?</p>
+          <p>Best,<br><br><strong>Outbound Desk Control</strong></p>
+          <img src="${trackingUrl}" width="1" height="1" style="display:none;" />
+        </div>
+      `;
 
       try {
-        await transporter.sendMail(options);
+        await transporter.sendMail({
+          from: `"Outbound Desk" <${process.env.SMTP_USER || 'branden@hirerainmakers.com'}>`,
+          to: lead.email,
+          subject: 'operational bottleneck?',
+          html: emailHtml
+        });
+
         await supabase
           .from('leads')
-          .update({ contacted: true, contacted_at: new Date().toISOString() })
-          .eq('id', lead.id);
-        successCount++;
-      } catch (sendError: any) {
-        console.error(`Error delivering to ${lead.email}:`, sendError.message);
+          .update({ 
+            status: 'In Negotiation', 
+            sequences_sent: (lead.sequences_sent || 0) + 1,
+            last_contacted_at: new Date().toISOString()
+          })
+          .eq('email', lead.email)
+          .eq('tenant_id', subdomain);
+
+        successfullyDispatched++;
+      } catch (mailError) {
+        console.error(`⚠️ Delivery dropped for target node: ${lead.email}`, mailError);
       }
     }
 
-    return NextResponse.json({ status: 'Processing', batch_delivered: successCount });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ status: 'Success', dispatched: successfullyDispatched });
+  } catch (globalError: any) {
+    return NextResponse.json({ error: globalError.message }, { status: 500 });
+  }
+}
+
+    for (const lead of leads) {
+      const trackingUrl = `https://${host}/api/track?email=${encodeURIComponent(lead.email)}&tenant=${subdomain}`;
+      
+      const emailHtml = `
+        <div style="font-family:sans-serif;font-size:13px;color:#111;line-height:1.6;">
+          <p>Hi ${lead.name || 'Partner'},</p>
+          <p>Most growth groups pass off generic spreadsheets and vanish. We think that structure is completely broken.</p>
+          <p>We do the opposite—we build your outbound workflows and take real accountability for your conversion velocity.</p>
+          <p>Would you be open to exploring a short, 3-sentence breakdown of our localized pipeline strategies later this week?</p>
+          <p>Best,<br><br><strong>Outbound Desk Control</strong></p>
+          <img src="${trackingUrl}" width="1" height="1" style="display:none;" />
+        </div>
+      `;
+
+      try {
+        await transporter.sendMail({
+          from: `"Outbound Desk" <${process.env.SMTP_USER || 'branden@hirerainmakers.com'}>`,
+          to: lead.email,
+          subject: 'operational bottleneck?',
+          html: emailHtml
+        });
+
+        await supabase
+          .from('leads')
+          .update({ 
+            status: 'In Negotiation', 
+            sequences_sent: (lead.sequences_sent || 0) + 1,
+            last_contacted_at: new Date().toISOString()
+          })
+          .eq('email', lead.email)
+          .eq('tenant_id', subdomain);
+
+        successfullyDispatched++;
+      } catch (mailError) {
+        console.error(`⚠️ Delivery dropped for target node: ${lead.email}`, mailError);
+      }
+    }
+
+    return NextResponse.json({ status: 'Success', dispatched: successfullyDispatched });
+  } catch (globalError: any) {
+    return NextResponse.json({ error: globalError.message }, { status: 500 });
   }
 }
