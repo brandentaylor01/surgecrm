@@ -15,14 +15,15 @@ interface RawLeadInput {
   [key: string]: any;
 }
 
-// Helper: Normalize company domains down to uniform layouts
-function normalizeDomain(urlStr: string): string {
-  if (!urlStr) return '';
-  return urlStr
-    .toLowerCase()
-    .trim()
-    .replace(/^(https?:\/\/)?(www\.)?/, '')
-    .split('/')[0];
+interface CleanedLead {
+  tenant_id: string;
+  email: string;
+  name: string;
+  company: string;
+  industry: string;
+  status: string;
+  priority: string;
+  sequences_sent: number;
 }
 
 export async function POST(request: Request) {
@@ -37,7 +38,7 @@ export async function POST(request: Request) {
 
     const processedEmails = new Set<string>();
     const processedComposites = new Set<string>();
-    const cleanedLeads = [];
+    const cleanedLeads: CleanedLead[] = [];
 
     for (const lead of leads) {
       const email = lead.email?.toLowerCase().trim() || '';
@@ -105,7 +106,8 @@ export async function POST(request: Request) {
       if (['50-200', '11-50'].includes(employeeSize)) score += 25; // Prioritizes mid-sized strategic sweet spots
       if (email.includes('owner') || email.includes('ceo') || email.includes('founder')) score += 10;
 
-      cleanedLeads.append({
+      // FIXED: Swapped Python .append() with native JavaScript .push()
+      cleanedLeads.push({
         tenant_id: tenantId,
         email: email,
         name: formattedName,
